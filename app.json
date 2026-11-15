@@ -1,25 +1,30 @@
 {
   "expo": {
-    "name": "alarm-klock",
+    "name": "Alarm Klock",
     "slug": "alarm-klock",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
+    "scheme": "alarmklock",
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.samay.alarmklock",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "Alarm Klock uses the camera for photo and QR wake-up missions.",
+        "NSMotionUsageDescription": "Alarm Klock uses motion sensors for shake, tilt and squat missions.",
+        "UIBackgroundModes": ["audio"]
+      }
     },
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
+      "package": "com.samay.alarmklock",
+      "permissions": ["CAMERA", "VIBRATE", "USE_EXACT_ALARM", "POST_NOTIFICATIONS", "WAKE_LOCK"]
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
+    "plugins": [
+      "expo-audio",
+      "expo-notifications",
+      ["expo-camera", { "cameraPermission": "Alarm Klock uses the camera for photo and QR wake-up missions." }],
+      ["expo-build-properties", {}]
+    ],
+    "extra": {}
   }
 }
