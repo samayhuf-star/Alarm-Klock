@@ -12,19 +12,46 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Alarm Klock uses the camera for photo and QR wake-up missions.",
         "NSMotionUsageDescription": "Alarm Klock uses motion sensors for shake, tilt and squat missions.",
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": [
+          "audio"
+        ]
       }
     },
     "android": {
       "package": "com.samay.alarmklock",
-      "permissions": ["CAMERA", "VIBRATE", "USE_EXACT_ALARM", "POST_NOTIFICATIONS", "WAKE_LOCK"]
+      "permissions": [
+        "CAMERA",
+        "VIBRATE",
+        "USE_EXACT_ALARM",
+        "POST_NOTIFICATIONS",
+        "WAKE_LOCK"
+      ]
     },
     "plugins": [
       "expo-audio",
       "expo-notifications",
-      ["expo-camera", { "cameraPermission": "Alarm Klock uses the camera for photo and QR wake-up missions." }],
-      ["expo-build-properties", {}]
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Alarm Klock uses the camera for photo and QR wake-up missions."
+        }
+      ],
+      [
+        "expo-build-properties",
+        {}
+      ]
     ],
-    "extra": {}
+    "extra": {
+      "eas": {
+        "projectId": "e21bc4e3-e21d-4ca8-951e-66a795378119"
+      }
+    },
+    "owner": "krosz",
+    "updates": {
+      "url": "https://u.expo.dev/e21bc4e3-e21d-4ca8-951e-66a795378119"
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
