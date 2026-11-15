@@ -1,0 +1,2 @@
+# Alarm Klock privacy policy
+Alarm Klock stores your alarms on your device only. We collect no account data. The camera is used only during Photo and QR missions and photos are not saved or uploaded. Motion sensors are used only during Shake, Tilt and Squat missions. Subscriptions are handled by Apple or Google and RevenueCat, which receives an anonymous app user ID and purchase status. Contact: samayhuf@gmail.com

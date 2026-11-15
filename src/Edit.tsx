@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, Switch, StyleSheet } from 'react-native';
-import { Alarm, DAYS, MISSIONS, MissionId } from './types'; import { Btn } from './missions/ui'; import { C } from './theme';
+import { Alarm, DAYS, MISSIONS, MissionId } from './types'; import { canUseMission } from './logic'; import { Btn } from './missions/ui'; import { C } from './theme';
 export default function Edit({ initial, pro, onSave, onCancel, onDelete, onNeedPro }: { initial: Alarm; pro: boolean; onSave: (a: Alarm) => void; onCancel: () => void; onDelete?: () => void; onNeedPro: () => void }) {
   const [a, setA] = useState(initial);
   const step = (k: 'hour' | 'minute', d: number) => setA({ ...a, [k]: (a[k] + d + (k === 'hour' ? 24 : 60)) % (k === 'hour' ? 24 : 60) });
   const toggleM = (id: MissionId, needsPro?: boolean) => {
-    if (needsPro && !pro) return onNeedPro();
+    if (needsPro && !canUseMission(id, pro)) return onNeedPro();
     setA({ ...a, missions: a.missions.includes(id) ? a.missions.filter((x) => x !== id) : [...a.missions, id] });
   };
   const Col = ({ k }: { k: 'hour' | 'minute' }) => (<View style={{ alignItems: 'center' }}>

@@ -4,9 +4,9 @@ import { StatusBar } from 'expo-status-bar'; import * as Notifications from 'exp
 import { Alarm } from './src/types'; import { loadAlarms, saveAlarms } from './src/store';
 import { initNotifications, scheduleAlarm, cancelAlarm, silenceFollowUps, nextRing } from './src/scheduler';
 import { initPurchases, showPaywall, openCustomerCenter, restore } from './src/purchases';
+import { canAddAlarm } from './src/logic';
 import Edit from './src/Edit'; import Ring from './src/Ring'; import { C } from './src/theme';
 
-const FREE_ALARMS = 2;
 const blank = (): Alarm => ({ id: String(Date.now()), hour: 7, minute: 0, label: '', enabled: true, days: [2, 3, 4, 5, 6], missions: ['math'], notifIds: [], gentle: true });
 
 export default function App() {
@@ -26,7 +26,7 @@ export default function App() {
   }, []);
 
   const save = async (a: Alarm, isNew: boolean) => {
-    if (isNew && !pro && alarms.length >= FREE_ALARMS) { if (!(await showPaywall())) return; }
+    if (isNew && !canAddAlarm(alarms.length, pro)) { if (!(await showPaywall())) return; }
     const ids = await scheduleAlarm({ ...a, notifIds: a.notifIds });
     const saved = { ...a, notifIds: ids };
     await persist(isNew ? [...alarms, saved] : alarms.map((x) => (x.id === a.id ? saved : x))); setEditing(null);
