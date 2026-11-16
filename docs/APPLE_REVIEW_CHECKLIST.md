@@ -19,5 +19,5 @@
 | Paywall shows price, period, trial, renewal, Terms, Privacy; no trial toggle | pending in RevenueCat paywall editor |
 | App Privacy labels: Purchases + User ID (RevenueCat), not used for tracking | pending at submission |
 | Review notes: use "Try this alarm now" and sleep timers to test, no account needed | pending at submission |
-| Background audio mode (2.5.4) | decision needed |
+| Background audio mode (2.5.4) | removed (user decision 17 Nov) |
 | 4.3(b) saturated category: lead with workouts, sleep timers, Stroop in metadata | pending at submission |

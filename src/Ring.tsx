@@ -11,7 +11,7 @@ export default function Ring({ alarm, onSolved, preview }: { alarm: Alarm; onSol
   // "Surprise me" is resolved once per ring.
   const ms = useMemo<MissionId[]>(() => (alarm.missions.length ? alarm.missions : ['math' as MissionId]).map((m) => (m === 'surprise' ? (pickSurprise() as MissionId) : m)), [alarm.id]);
   useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: true }).catch(() => {});
+    setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: false }).catch(() => {});
     player.loop = true; player.volume = alarm.gentle ? 0.15 : 1; player.play();
     // Loud, never-ending vibration until the missions are done.
     const buzz = () => { Vibration.vibrate(Platform.OS === 'android' ? [0, 800, 300] : 800, Platform.OS === 'android'); };

@@ -12,9 +12,6 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Alarm Klock uses the camera for photo and QR wake-up missions.",
         "NSMotionUsageDescription": "Alarm Klock uses motion sensors for shake, tilt and squat missions.",
-        "UIBackgroundModes": [
-          "audio"
-        ],
         "ITSAppUsesNonExemptEncryption": false
       },
       "privacyManifests": {
@@ -47,7 +44,7 @@
       ]
     },
     "plugins": [
-      "expo-audio",
+      ["expo-audio", { "enableBackgroundPlayback": false }],
       [
         "expo-notifications",
         {
