@@ -7,7 +7,7 @@ const LINES = ['Up up up! 🔥', 'Your bed is lying to you.', 'Finish the missio
 export default function Ring({ alarm, onSolved, preview }: { alarm: Alarm; onSolved: () => void; preview?: boolean }) {
   useKeepAwake();
   const player = useAudioPlayer(SOUND_SRC[alarm.sound || 'classic']);
-  const [step, setStep] = useState(0); const [line, setLine] = useState(0);
+  const [step, setStep] = useState(0); const [line, setLine] = useState(0); const [stuck, setStuck] = useState(false); const [fallback, setFallback] = useState(false);
   // "Surprise me" is resolved once per ring.
   const ms = useMemo<MissionId[]>(() => (alarm.missions.length ? alarm.missions : ['math' as MissionId]).map((m) => (m === 'surprise' ? (pickSurprise() as MissionId) : m)), [alarm.id]);
   useEffect(() => {
@@ -25,12 +25,15 @@ export default function Ring({ alarm, onSolved, preview }: { alarm: Alarm; onSol
     const back = preview ? undefined : BackHandler.addEventListener('hardwareBackPress', () => true);
     return () => { [vib, keep, talk, ramp].forEach((t) => t && clearInterval(t)); back?.remove(); player.pause(); Vibration.cancel(); };
   }, []);
+  // Safety valve: if a mission does not register for 90s, offer plain math so the alarm can never trap you.
+  useEffect(() => { setStuck(false); setFallback(false); const t = setTimeout(() => setStuck(true), 90000); return () => clearTimeout(t); }, [step]);
   const done = () => { if (step + 1 >= ms.length) onSolved(); else setStep(step + 1); };
   return (<View style={s.c}>
     <Text style={s.time}>{String(alarm.hour).padStart(2, '0')}:{String(alarm.minute).padStart(2, '0')}</Text>
     <Text style={s.lab}>{alarm.label || 'Time to wake up'} · Mission {step + 1}/{ms.length}</Text>
     <Text style={s.quote}>{LINES[line]}</Text>
-    <View style={s.box}><Mission key={step} id={ms[step]} onDone={done} qrValue={alarm.qrValue} /></View>
+    <View style={s.box}><Mission key={`${step}-${fallback}`} id={fallback ? 'math' : ms[step]} onDone={done} qrValue={alarm.qrValue} /></View>
+    {stuck && !fallback && !preview && <Btn t="Mission not working? Do math instead" kind="ghost" onPress={() => setFallback(true)} style={{ marginBottom: 12 }} />}
     {preview ? <Btn t="Stop test" kind="ghost" onPress={onSolved} style={{ marginBottom: 24 }} /> : <Text style={s.hint}>It will not stop until every mission is done.</Text>}
   </View>);
 }

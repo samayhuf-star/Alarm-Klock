@@ -15,7 +15,13 @@ export default function App() {
   const [ok, setOk] = useState(true); const [streak, setStreak] = useState<Streak>({ count: 0, last: '' });
 
   const persist = useCallback(async (next: Alarm[]) => { setAlarms(next); await saveAlarms(next); }, []);
-  const ring = useCallback((id?: string) => setAlarms((cur) => { const a = cur.find((x) => x.id === id); if (a) setRinging(a); return cur; }), []);
+  const solvedAt = React.useRef<Record<string, number>>({}); const ringingId = React.useRef<string | null>(null);
+  const ring = useCallback((id?: string) => setAlarms((cur) => {
+    const a = cur.find((x) => x.id === id); if (!a) return cur;
+    if (ringingId.current === a.id) return cur; // already ringing
+    if (Date.now() - (solvedAt.current[a.id] || 0) < 5 * 60000) return cur; // just solved: ignore leftover follow-ups
+    ringingId.current = a.id; setRinging(a); return cur;
+  }), []);
 
   useEffect(() => {
     initPurchases(setPro); initNotifications().then(setOk); loadStreak().then(setStreak);
@@ -40,11 +46,11 @@ export default function App() {
   const toggle = async (a: Alarm, enabled: boolean) => { const n = { ...a, enabled }; n.notifIds = await scheduleAlarm(n); await persist(alarms.map((x) => (x.id === a.id ? n : x))); };
   const del = (a: Alarm) => Alert.alert('Delete alarm?', 'This cannot be undone.', [{ text: 'Keep', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { await cancelAlarm(a); await persist(alarms.filter((x) => x.id !== a.id)); setEditing(null); } }]);
   const solved = async () => {
-    if (!ringing) return; const r = ringing;
+    if (!ringing) return; const r = ringing; solvedAt.current[r.id] = Date.now(); ringingId.current = null; setRinging(null); // stop at once, clean up after
     await silenceFollowUps(r);
     if (r.temp || r.days.length === 0) { const rest = alarms.filter((x) => x.id !== r.id || (!r.temp && r.days.length > 0)); await persist(r.temp ? rest : alarms.map((x) => (x.id === r.id ? { ...x, enabled: false, notifIds: [] } : x))); }
     else { const ids = await scheduleAlarm(r, { skipTodayFollowUps: true }); await persist(alarms.map((x) => (x.id === r.id ? { ...x, notifIds: ids } : x))); }
-    const ns = nextStreak(streak); setStreak(ns); await saveStreak(ns); setRinging(null);
+    const ns = nextStreak(streak); setStreak(ns); await saveStreak(ns);
   };
   const startSleep = (p: (typeof SLEEP_PRESETS)[number]) => {
     const t = alarmFromDuration(p.label, p.minutes);
