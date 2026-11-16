@@ -5,6 +5,7 @@ import { Alarm } from './src/types'; import { loadAlarms, saveAlarms, loadStreak
 import { initNotifications, scheduleAlarm, cancelAlarm, silenceFollowUps, nextRing } from './src/scheduler';
 import { initPurchases, showPaywall, openCustomerCenter, restore } from './src/purchases';
 import { canAddAlarm, SLEEP_PRESETS, alarmFromDuration, isExpiredTemp, nextStreak, Streak } from './src/logic';
+import AsyncStorage from '@react-native-async-storage/async-storage'; import Onboarding from './src/Onboarding';
 import Edit from './src/Edit'; import Ring from './src/Ring'; import { C } from './src/theme';
 
 const blank = (): Alarm => ({ id: String(Date.now()), hour: 7, minute: 0, label: '', enabled: true, days: [2, 3, 4, 5, 6], missions: ['math'], notifIds: [], gentle: true });
@@ -12,12 +13,13 @@ const blank = (): Alarm => ({ id: String(Date.now()), hour: 7, minute: 0, label:
 export default function App() {
   const [alarms, setAlarms] = useState<Alarm[]>([]); const [pro, setPro] = useState(false);
   const [editing, setEditing] = useState<{ a: Alarm; isNew: boolean } | null>(null); const [ringing, setRinging] = useState<Alarm | null>(null); const [test, setTest] = useState<Alarm | null>(null);
-  const [ok, setOk] = useState(true); const [streak, setStreak] = useState<Streak>({ count: 0, last: '' });
+  const [seen, setSeen] = useState<boolean | null>(null); const [ok, setOk] = useState(true); const [streak, setStreak] = useState<Streak>({ count: 0, last: '' });
 
   const persist = useCallback(async (next: Alarm[]) => { setAlarms(next); await saveAlarms(next); }, []);
   const ring = useCallback((id?: string) => setAlarms((cur) => { const a = cur.find((x) => x.id === id); if (a) setRinging(a); return cur; }), []);
 
   useEffect(() => {
+    AsyncStorage.getItem('onboarded.v1').then((v) => setSeen(v === '1')).catch(() => setSeen(true));
     initPurchases(setPro); initNotifications().then(setOk); loadStreak().then(setStreak);
     loadAlarms().then(async (list) => {
       const live = list.filter((x) => !isExpiredTemp(x)); const out: Alarm[] = [];
@@ -51,6 +53,8 @@ export default function App() {
     const at = `${String(t.hour).padStart(2, '0')}:${String(t.minute).padStart(2, '0')}`;
     Alert.alert(`${p.emoji} ${p.label}`, `Wake you at ${at}. You will have to finish a mission to stop it.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Start', onPress: async () => { const ids = await scheduleAlarm(t); await persist([...alarms, { ...t, notifIds: ids }]); } }]);
   };
+  if (seen === null) return <View style={s.c} />;
+  if (!seen) return <Onboarding onDone={async (pw) => { await AsyncStorage.setItem('onboarded.v1', '1'); setSeen(true); if (pw) showPaywall(); }} />;
   if (test) return <Ring alarm={test} preview onSolved={() => setTest(null)} />;
   if (ringing) return <Ring alarm={ringing} onSolved={solved} />;
   if (editing) return <Edit initial={editing.a} pro={pro} onSave={(a) => save(a, editing.isNew)} onCancel={() => setEditing(null)} onDelete={editing.isNew ? undefined : () => del(editing.a)} onNeedPro={showPaywall} onTest={setTest} />;
