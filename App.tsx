@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, Pressable, FlatList, Switch, Alert, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar'; import * as Notifications from 'expo-notifications';
-import { Alarm } from './src/types'; import { loadAlarms, saveAlarms } from './src/store';
+import { Alarm } from './src/types'; import { loadAlarms, saveAlarms, loadStreak, saveStreak } from './src/store';
 import { initNotifications, scheduleAlarm, cancelAlarm, silenceFollowUps, nextRing } from './src/scheduler';
 import { initPurchases, showPaywall, openCustomerCenter, restore } from './src/purchases';
-import { canAddAlarm } from './src/logic';
+import { canAddAlarm, SLEEP_PRESETS, alarmFromDuration, isExpiredTemp, nextStreak, Streak } from './src/logic';
 import Edit from './src/Edit'; import Ring from './src/Ring'; import { C } from './src/theme';
 
 const blank = (): Alarm => ({ id: String(Date.now()), hour: 7, minute: 0, label: '', enabled: true, days: [2, 3, 4, 5, 6], missions: ['math'], notifIds: [], gentle: true });
@@ -12,13 +12,19 @@ const blank = (): Alarm => ({ id: String(Date.now()), hour: 7, minute: 0, label:
 export default function App() {
   const [alarms, setAlarms] = useState<Alarm[]>([]); const [pro, setPro] = useState(false);
   const [editing, setEditing] = useState<{ a: Alarm; isNew: boolean } | null>(null); const [ringing, setRinging] = useState<Alarm | null>(null); const [test, setTest] = useState<Alarm | null>(null);
-  const [ok, setOk] = useState(true);
+  const [ok, setOk] = useState(true); const [streak, setStreak] = useState<Streak>({ count: 0, last: '' });
 
   const persist = useCallback(async (next: Alarm[]) => { setAlarms(next); await saveAlarms(next); }, []);
   const ring = useCallback((id?: string) => setAlarms((cur) => { const a = cur.find((x) => x.id === id); if (a) setRinging(a); return cur; }), []);
 
   useEffect(() => {
-    initPurchases(setPro); initNotifications().then(setOk); loadAlarms().then(setAlarms);
+    initPurchases(setPro); initNotifications().then(setOk); loadStreak().then(setStreak);
+    loadAlarms().then(async (list) => {
+      const live = list.filter((x) => !isExpiredTemp(x)); const out: Alarm[] = [];
+      for (const x of live) out.push(x.enabled ? { ...x, notifIds: await scheduleAlarm(x) } : x); // re-arm everything on launch
+      for (const x of list.filter((y) => isExpiredTemp(y))) await cancelAlarm(x);
+      setAlarms(out); saveAlarms(out);
+    });
     const r = Notifications.addNotificationResponseReceivedListener((x) => ring(x.notification.request.content.data?.alarmId as string));
     const f = Notifications.addNotificationReceivedListener((x) => ring(x.request.content.data?.alarmId as string));
     Notifications.getLastNotificationResponseAsync().then((x) => x && ring(x.notification.request.content.data?.alarmId as string));
@@ -26,23 +32,36 @@ export default function App() {
   }, []);
 
   const save = async (a: Alarm, isNew: boolean) => {
-    if (isNew && !canAddAlarm(alarms.length, pro)) { if (!(await showPaywall())) return; }
+    if (isNew && !canAddAlarm(alarms.filter((x) => !x.temp).length, pro)) { if (!(await showPaywall())) return; }
     const ids = await scheduleAlarm({ ...a, notifIds: a.notifIds });
     const saved = { ...a, notifIds: ids };
     await persist(isNew ? [...alarms, saved] : alarms.map((x) => (x.id === a.id ? saved : x))); setEditing(null);
   };
   const toggle = async (a: Alarm, enabled: boolean) => { const n = { ...a, enabled }; n.notifIds = await scheduleAlarm(n); await persist(alarms.map((x) => (x.id === a.id ? n : x))); };
   const del = (a: Alarm) => Alert.alert('Delete alarm?', 'This cannot be undone.', [{ text: 'Keep', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { await cancelAlarm(a); await persist(alarms.filter((x) => x.id !== a.id)); setEditing(null); } }]);
-  const solved = async () => { if (!ringing) return; await silenceFollowUps(ringing); if (ringing.days.length === 0) await persist(alarms.map((x) => (x.id === ringing.id ? { ...x, enabled: false, notifIds: [] } : x))); setRinging(null); };
-
+  const solved = async () => {
+    if (!ringing) return; const r = ringing;
+    await silenceFollowUps(r);
+    if (r.temp || r.days.length === 0) { const rest = alarms.filter((x) => x.id !== r.id || (!r.temp && r.days.length > 0)); await persist(r.temp ? rest : alarms.map((x) => (x.id === r.id ? { ...x, enabled: false, notifIds: [] } : x))); }
+    else { const ids = await scheduleAlarm(r, { skipTodayFollowUps: true }); await persist(alarms.map((x) => (x.id === r.id ? { ...x, notifIds: ids } : x))); }
+    const ns = nextStreak(streak); setStreak(ns); await saveStreak(ns); setRinging(null);
+  };
+  const startSleep = (p: (typeof SLEEP_PRESETS)[number]) => {
+    const t = alarmFromDuration(p.label, p.minutes);
+    const at = `${String(t.hour).padStart(2, '0')}:${String(t.minute).padStart(2, '0')}`;
+    Alert.alert(`${p.emoji} ${p.label}`, `Wake you at ${at}. You will have to finish a mission to stop it.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Start', onPress: async () => { const ids = await scheduleAlarm(t); await persist([...alarms, { ...t, notifIds: ids }]); } }]);
+  };
   if (test) return <Ring alarm={test} preview onSolved={() => setTest(null)} />;
   if (ringing) return <Ring alarm={ringing} onSolved={solved} />;
   if (editing) return <Edit initial={editing.a} pro={pro} onSave={(a) => save(a, editing.isNew)} onCancel={() => setEditing(null)} onDelete={editing.isNew ? undefined : () => del(editing.a)} onNeedPro={showPaywall} onTest={setTest} />;
 
   return (<View style={s.c}><StatusBar style="light" />
-    <Text style={s.h}>Alarm Klock</Text><Text style={s.sub}>{pro ? 'Pro unlocked' : 'Free trial: 7 days of everything'}</Text>
+    <Text style={s.h}>Alarm Klock</Text><Text style={s.sub}>{pro ? 'Pro unlocked' : '7-day free trial for all missions'}{streak.count > 0 ? `  ·  🔥 ${streak.count}-day streak` : ''}</Text>
     {!ok && <Text style={s.warn}>Notifications are off. Alarms cannot ring until you allow them in Settings.</Text>}
-    <FlatList data={alarms} keyExtractor={(a) => a.id} contentContainerStyle={{ paddingBottom: 120 }}
+    <FlatList data={alarms}
+      ListHeaderComponent={<View style={{ marginBottom: 14 }}><Text style={{ color: C.dim, fontWeight: '700', marginBottom: 8 }}>Sleep timer (tap to start)</Text>
+        <FlatList horizontal showsHorizontalScrollIndicator={false} data={SLEEP_PRESETS} keyExtractor={(p) => p.id} renderItem={({ item: p }) => (
+          <Pressable onPress={() => startSleep(p)} style={s.chip}><Text style={{ fontSize: 22 }}>{p.emoji}</Text><Text style={{ color: C.text, fontWeight: '800' }}>{p.minutes < 60 ? `${p.minutes}m` : `${p.minutes / 60}h`}</Text><Text style={{ color: C.dim, fontSize: 11 }}>{p.label}</Text></Pressable>)} /></View>} keyExtractor={(a) => a.id} contentContainerStyle={{ paddingBottom: 120 }}
       ListEmptyComponent={<Text style={{ color: C.dim, textAlign: 'center', marginTop: 60 }}>No alarms yet. Tap + to add one.</Text>}
       renderItem={({ item: a }) => (<Pressable onPress={() => setEditing({ a, isNew: false })} style={s.card}>
         <View style={{ flex: 1 }}><Text style={[s.t, !a.enabled && { color: C.dim }]}>{String(a.hour).padStart(2, '0')}:{String(a.minute).padStart(2, '0')}</Text>
@@ -58,4 +77,5 @@ const s = StyleSheet.create({ c: { flex: 1, backgroundColor: C.bg, paddingTop: 7
   warn: { color: C.accent2, marginBottom: 12 }, card: { backgroundColor: C.card, borderRadius: 20, padding: 18, marginBottom: 12, flexDirection: 'row', alignItems: 'center' },
   t: { color: C.text, fontSize: 40, fontWeight: '900' }, lab: { color: C.dim, marginTop: 2 },
   bar: { position: 'absolute', bottom: 34, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  chip: { backgroundColor: C.card, borderRadius: 16, paddingVertical: 10, paddingHorizontal: 14, marginRight: 10, alignItems: 'center', minWidth: 84 },
   fab: { width: 68, height: 68, borderRadius: 34, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }, ghost: { backgroundColor: C.card2, paddingVertical: 14, paddingHorizontal: 20, borderRadius: 16 } });

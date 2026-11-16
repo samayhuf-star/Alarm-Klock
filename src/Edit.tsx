@@ -30,11 +30,14 @@ export default function Edit({ initial, pro, onSave, onCancel, onDelete, onNeedP
       <Pressable key={so.id} onPress={() => preview(so.id)} style={[s.m, on && { borderColor: C.accent }]}>
         <View style={{ flex: 1 }}><Text style={s.mn}>{so.name}</Text><Text style={{ color: C.dim }}>{so.desc}</Text></View>
         <Text style={{ color: on ? C.accent : C.dim, fontSize: 24 }}>{playing === so.id ? '■' : '▶'}</Text></Pressable>); })}
-    <Text style={s.sec}>Missions (done in order)</Text>
-    {MISSIONS.map((m) => { const on = a.missions.includes(m.id); return (
-      <Pressable key={m.id} onPress={() => toggleM(m.id, m.pro)} style={[s.m, on && { borderColor: C.accent }]}>
-        <View style={{ flex: 1 }}><Text style={s.mn}>{m.name}{m.pro && !pro ? '  🔒' : ''}</Text><Text style={{ color: C.dim }}>{m.desc}</Text></View>
-        <Text style={{ color: on ? C.accent : C.dim, fontSize: 22 }}>{on ? '●' : '○'}</Text></Pressable>); })}
+    <Text style={s.sec}>Missions (done in order, the alarm will not stop until all are done)</Text>
+    {(['Surprise', 'Brain', 'Workout'] as const).map((g) => (<View key={g}>
+      <Text style={[s.sec, { color: C.accent, marginTop: 6 }]}>{g === 'Surprise' ? '🎲 Surprise' : g === 'Brain' ? '🧠 Brain' : '💪 Workout'}</Text>
+      {MISSIONS.filter((m) => m.group === g).map((m) => { const on = a.missions.includes(m.id); return (
+        <Pressable key={m.id} onPress={() => toggleM(m.id, m.pro)} style={[s.m, on && { borderColor: C.accent }]}>
+          <View style={{ flex: 1 }}><Text style={s.mn}>{m.name}{m.pro && !pro ? '  🔒' : ''}</Text><Text style={{ color: C.dim }}>{m.desc}</Text></View>
+          <Text style={{ color: on ? C.accent : C.dim, fontSize: 22 }}>{on ? '●' : '○'}</Text></Pressable>); })}
+    </View>))}
     {a.missions.includes('qr') && <TextInput value={a.qrValue || ''} onChangeText={(qrValue) => setA({ ...a, qrValue })} placeholder="Text of your QR code (blank = any)" placeholderTextColor={C.dim} style={s.input} />}
     <View style={[s.m, { justifyContent: 'space-between' }]}><View><Text style={s.mn}>Gentle wake</Text><Text style={{ color: C.dim }}>Volume rises slowly</Text></View>
       <Switch value={a.gentle} onValueChange={(gentle) => setA({ ...a, gentle })} trackColor={{ true: C.accent }} /></View>

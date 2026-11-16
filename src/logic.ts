@@ -4,12 +4,16 @@ export type Trigger =
   | { kind: 'date'; date: Date; n: number }
   | { kind: 'weekly'; weekday: number; hour: number; minute: number; n: number };
 
-export const BACKUPS = 4; // main ring + 3 follow-ups, one minute apart
+export const BACKUPS = 6; // main ring + 5 follow-ups, one minute apart (iOS allows 64 pending notifications)
 
 /** Pure: which notification triggers an alarm needs. weekday: 1=Sun..7=Sat. */
 export function planTriggers(a: Alarm, now: Date = new Date()): Trigger[] {
   if (!a.enabled) return [];
   const out: Trigger[] = [];
+  if (a.fireAt) {
+    for (let n = 0; n < BACKUPS; n++) { const d = new Date(a.fireAt + n * 60000); if (d.getTime() > now.getTime()) out.push({ kind: 'date', date: d, n }); }
+    return out;
+  }
   for (let n = 0; n < BACKUPS; n++) {
     const total = a.hour * 60 + a.minute + n;
     const h = Math.floor(total / 60) % 24, m = total % 60;
@@ -42,5 +46,36 @@ export const formatIn = (mins: number | null) => (mins === null ? '' : `Rings in
 /** Pure: free tier limits. */
 export const FREE_ALARMS = 2;
 export const canAddAlarm = (count: number, pro: boolean) => pro || count < FREE_ALARMS;
-export const FREE_MISSIONS = ['math', 'shake', 'memory', 'typing'];
+export const FREE_MISSIONS = ['math', 'shake', 'memory', 'typing', 'stroop', 'surprise'];
 export const canUseMission = (id: string, pro: boolean) => pro || FREE_MISSIONS.includes(id);
+
+/** Sleep timers: one-tap temporary alarms. */
+export const SLEEP_PRESETS = [
+  { id: 'nap15', label: 'Quick nap', minutes: 15, emoji: '⚡' },
+  { id: 'nap30', label: 'Nap', minutes: 30, emoji: '😴' },
+  { id: 'nap60', label: 'Long nap', minutes: 60, emoji: '🛌' },
+  { id: 'nap120', label: 'Power sleep', minutes: 120, emoji: '🌙' },
+  { id: 'deep7', label: 'Deep sleep', minutes: 420, emoji: '🌌' },
+  { id: 'deep8', label: 'Full night', minutes: 480, emoji: '🌠' },
+];
+export const durationLabel = (m: number) => (m < 60 ? `${m} min` : m % 60 === 0 ? `${m / 60} h` : `${Math.floor(m / 60)} h ${m % 60} min`);
+/** Pure: wake time = now + minutes, rounded UP to the next whole minute so it never rings early. */
+export function alarmFromDuration(label: string, minutes: number, now: Date = new Date()): Alarm {
+  const ms = now.getTime() + minutes * 60000;
+  const fireAt = Math.ceil(ms / 60000) * 60000;
+  const d = new Date(fireAt);
+  return { id: `sleep-${fireAt}`, hour: d.getHours(), minute: d.getMinutes(), label: `${label} · ${durationLabel(minutes)}`, enabled: true, days: [], missions: ['math'], notifIds: [], gentle: false, temp: true, fireAt };
+}
+export const isExpiredTemp = (a: Alarm, now: Date = new Date()) => !!a.temp && !!a.fireAt && a.fireAt + BACKUPS * 60000 < now.getTime();
+
+/** Pure: streak of days with a completed wake-up. */
+export type Streak = { count: number; last: string };
+export const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+export function nextStreak(s: Streak, today: Date = new Date()): Streak {
+  const t = dayKey(today); if (s.last === t) return s;
+  const y = new Date(today); y.setDate(y.getDate() - 1);
+  return { count: s.last === dayKey(y) ? s.count + 1 : 1, last: t };
+}
+/** Pure: pick a random mission for "Surprise me". */
+export const SURPRISE_POOL = ['math', 'memory', 'stroop', 'pushups', 'squat', 'jacks', 'situps', 'shake'] as const;
+export const pickSurprise = (rand: () => number = Math.random) => SURPRISE_POOL[Math.floor(rand() * SURPRISE_POOL.length)];

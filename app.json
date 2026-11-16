@@ -24,7 +24,8 @@
         "VIBRATE",
         "USE_EXACT_ALARM",
         "POST_NOTIFICATIONS",
-        "WAKE_LOCK"
+        "WAKE_LOCK",
+        "android.permission.ACTIVITY_RECOGNITION"
       ]
     },
     "plugins": [
