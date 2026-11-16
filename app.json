@@ -29,7 +29,18 @@
     },
     "plugins": [
       "expo-audio",
-      "expo-notifications",
+      [
+        "expo-notifications",
+        {
+          "sounds": [
+            "./assets/sounds/classic.wav",
+            "./assets/sounds/digital.wav",
+            "./assets/sounds/siren.wav",
+            "./assets/sounds/rise.wav",
+            "./assets/sounds/chime.wav"
+          ]
+        }
+      ],
       [
         "expo-camera",
         {

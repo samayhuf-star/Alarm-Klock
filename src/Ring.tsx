@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Vibration } from 'react-native';
-import { useAudioPlayer } from 'expo-audio'; import { useKeepAwake } from 'expo-keep-awake';
-import { Alarm } from './types'; import { Mission } from './missions'; import { C } from './theme';
-export default function Ring({ alarm, onSolved }: { alarm: Alarm; onSolved: () => void }) {
+import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'; import { useKeepAwake } from 'expo-keep-awake';
+import { Alarm } from './types'; import { SOUND_SRC } from './sounds'; import { Btn } from './missions/ui'; import { Mission } from './missions'; import { C } from './theme';
+export default function Ring({ alarm, onSolved, preview }: { alarm: Alarm; onSolved: () => void; preview?: boolean }) {
   useKeepAwake();
-  const player = useAudioPlayer(require('../assets/alarm.wav'));
+  const player = useAudioPlayer(SOUND_SRC[alarm.sound || 'classic']);
   const [step, setStep] = useState(0);
   useEffect(() => {
+    setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: true }).catch(() => {});
     player.loop = true; player.volume = alarm.gentle ? 0.15 : 1; player.play();
     Vibration.vibrate([0, 600, 400], true);
     let v = alarm.gentle ? 0.15 : 1;
@@ -19,7 +20,7 @@ export default function Ring({ alarm, onSolved }: { alarm: Alarm; onSolved: () =
     <Text style={s.time}>{String(alarm.hour).padStart(2, '0')}:{String(alarm.minute).padStart(2, '0')}</Text>
     <Text style={s.lab}>{alarm.label || 'Time to wake up'} · Mission {step + 1}/{ms.length}</Text>
     <View style={s.box}><Mission key={step} id={ms[step]} onDone={done} qrValue={alarm.qrValue} /></View>
-    <Text style={s.hint}>The alarm stops only when every mission is done.</Text>
+    {preview ? <Btn t="Stop test" kind="ghost" onPress={onSolved} style={{ marginBottom: 24 }} /> : <Text style={s.hint}>The alarm stops only when every mission is done.</Text>}
   </View>);
 }
 const s = StyleSheet.create({ c: { flex: 1, backgroundColor: C.bg, padding: 24, paddingTop: 80, alignItems: 'center' },

@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { Alarm } from './types';
+import { soundFile } from './sounds';
 import { planTriggers, minutesUntilNext, formatIn } from './logic';
 
 export async function initNotifications() {
@@ -8,11 +9,13 @@ export async function initNotifications() {
     handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
   });
   if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('alarms', {
-      name: 'Alarms', importance: Notifications.AndroidImportance.MAX,
-      sound: 'default', vibrationPattern: [0, 500, 300, 500], bypassDnd: true,
-      lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-    });
+    for (const id of ['classic', 'digital', 'siren', 'rise', 'chime']) {
+      await Notifications.setNotificationChannelAsync(`alarms-${id}`, {
+        name: `Alarms (${id})`, importance: Notifications.AndroidImportance.MAX,
+        sound: `${id}.wav`, vibrationPattern: [0, 500, 300, 500], bypassDnd: true,
+        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+      });
+    }
   }
   const p = await Notifications.requestPermissionsAsync({ ios: { allowAlert: true, allowSound: true, allowCriticalAlerts: false } });
   return p.granted;
@@ -21,7 +24,7 @@ export async function initNotifications() {
 const content = (a: Alarm, n: number) => ({
   title: n === 0 ? (a.label || 'Wake up!') : `Still asleep? (${n})`,
   body: 'Open Alarm Klock to complete your mission and stop the alarm.',
-  sound: true as const, data: { alarmId: a.id },
+  sound: soundFile(a.sound), data: { alarmId: a.id },
   interruptionLevel: 'timeSensitive' as const, priority: Notifications.AndroidNotificationPriority.MAX,
 });
 
@@ -33,8 +36,8 @@ export async function scheduleAlarm(a: Alarm): Promise<string[]> {
     ids.push(await Notifications.scheduleNotificationAsync({
       content: content(a, t.n),
       trigger: t.kind === 'date'
-        ? { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.date, channelId: 'alarms' }
-        : { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: t.weekday, hour: t.hour, minute: t.minute, channelId: 'alarms' },
+        ? { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.date, channelId: `alarms-${a.sound || 'classic'}` }
+        : { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: t.weekday, hour: t.hour, minute: t.minute, channelId: `alarms-${a.sound || 'classic'}` },
     }));
   }
   return ids;

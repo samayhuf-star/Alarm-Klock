@@ -11,7 +11,7 @@ const blank = (): Alarm => ({ id: String(Date.now()), hour: 7, minute: 0, label:
 
 export default function App() {
   const [alarms, setAlarms] = useState<Alarm[]>([]); const [pro, setPro] = useState(false);
-  const [editing, setEditing] = useState<{ a: Alarm; isNew: boolean } | null>(null); const [ringing, setRinging] = useState<Alarm | null>(null);
+  const [editing, setEditing] = useState<{ a: Alarm; isNew: boolean } | null>(null); const [ringing, setRinging] = useState<Alarm | null>(null); const [test, setTest] = useState<Alarm | null>(null);
   const [ok, setOk] = useState(true);
 
   const persist = useCallback(async (next: Alarm[]) => { setAlarms(next); await saveAlarms(next); }, []);
@@ -35,8 +35,9 @@ export default function App() {
   const del = (a: Alarm) => Alert.alert('Delete alarm?', 'This cannot be undone.', [{ text: 'Keep', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { await cancelAlarm(a); await persist(alarms.filter((x) => x.id !== a.id)); setEditing(null); } }]);
   const solved = async () => { if (!ringing) return; await silenceFollowUps(ringing); if (ringing.days.length === 0) await persist(alarms.map((x) => (x.id === ringing.id ? { ...x, enabled: false, notifIds: [] } : x))); setRinging(null); };
 
+  if (test) return <Ring alarm={test} preview onSolved={() => setTest(null)} />;
   if (ringing) return <Ring alarm={ringing} onSolved={solved} />;
-  if (editing) return <Edit initial={editing.a} pro={pro} onSave={(a) => save(a, editing.isNew)} onCancel={() => setEditing(null)} onDelete={editing.isNew ? undefined : () => del(editing.a)} onNeedPro={showPaywall} />;
+  if (editing) return <Edit initial={editing.a} pro={pro} onSave={(a) => save(a, editing.isNew)} onCancel={() => setEditing(null)} onDelete={editing.isNew ? undefined : () => del(editing.a)} onNeedPro={showPaywall} onTest={setTest} />;
 
   return (<View style={s.c}><StatusBar style="light" />
     <Text style={s.h}>Alarm Klock</Text><Text style={s.sub}>{pro ? 'Pro unlocked' : 'Free trial: 7 days of everything'}</Text>

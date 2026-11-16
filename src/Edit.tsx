@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, Switch, StyleSheet } from 'react-native';
-import { Alarm, DAYS, MISSIONS, MissionId } from './types'; import { canUseMission } from './logic'; import { Btn } from './missions/ui'; import { C } from './theme';
-export default function Edit({ initial, pro, onSave, onCancel, onDelete, onNeedPro }: { initial: Alarm; pro: boolean; onSave: (a: Alarm) => void; onCancel: () => void; onDelete?: () => void; onNeedPro: () => void }) {
+import { Alarm, DAYS, MISSIONS, MissionId } from './types'; import { canUseMission } from './logic'; import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'; import { SOUNDS, SOUND_SRC, SoundId } from './sounds'; import { Btn } from './missions/ui'; import { C } from './theme';
+export default function Edit({ initial, pro, onSave, onCancel, onDelete, onNeedPro, onTest }: { initial: Alarm; pro: boolean; onSave: (a: Alarm) => void; onCancel: () => void; onDelete?: () => void; onNeedPro: () => void; onTest: (a: Alarm) => void }) {
   const [a, setA] = useState(initial);
+  const player = useAudioPlayer(SOUND_SRC[initial.sound || 'classic']); const [playing, setPlaying] = useState<SoundId | null>(null);
+  React.useEffect(() => { setAudioModeAsync({ playsInSilentMode: true }).catch(() => {}); return () => { try { player.pause(); } catch {} }; }, []);
+  const preview = (id: SoundId) => {
+    if (playing === id) { player.pause(); setPlaying(null); return; }
+    player.replace(SOUND_SRC[id]); player.loop = true; player.volume = 1; player.play(); setPlaying(id);
+    setA((x) => ({ ...x, sound: id }));
+  };
   const step = (k: 'hour' | 'minute', d: number) => setA({ ...a, [k]: (a[k] + d + (k === 'hour' ? 24 : 60)) % (k === 'hour' ? 24 : 60) });
   const toggleM = (id: MissionId, needsPro?: boolean) => {
     if (needsPro && !canUseMission(id, pro)) return onNeedPro();
@@ -18,6 +25,11 @@ export default function Edit({ initial, pro, onSave, onCancel, onDelete, onNeedP
     <View style={s.row}>{DAYS.map((d, i) => { const on = a.days.includes(i + 1); return (
       <Pressable key={i} onPress={() => setA({ ...a, days: on ? a.days.filter((x) => x !== i + 1) : [...a.days, i + 1] })} style={[s.day, on && { backgroundColor: C.accent }]}>
         <Text style={{ color: on ? '#1a1200' : C.text, fontWeight: '800' }}>{d}</Text></Pressable>); })}</View>
+    <Text style={s.sec}>Alarm sound (tap to select and preview, tap again to stop)</Text>
+    {SOUNDS.map((so) => { const on = (a.sound || 'classic') === so.id; return (
+      <Pressable key={so.id} onPress={() => preview(so.id)} style={[s.m, on && { borderColor: C.accent }]}>
+        <View style={{ flex: 1 }}><Text style={s.mn}>{so.name}</Text><Text style={{ color: C.dim }}>{so.desc}</Text></View>
+        <Text style={{ color: on ? C.accent : C.dim, fontSize: 24 }}>{playing === so.id ? '■' : '▶'}</Text></Pressable>); })}
     <Text style={s.sec}>Missions (done in order)</Text>
     {MISSIONS.map((m) => { const on = a.missions.includes(m.id); return (
       <Pressable key={m.id} onPress={() => toggleM(m.id, m.pro)} style={[s.m, on && { borderColor: C.accent }]}>
@@ -26,8 +38,9 @@ export default function Edit({ initial, pro, onSave, onCancel, onDelete, onNeedP
     {a.missions.includes('qr') && <TextInput value={a.qrValue || ''} onChangeText={(qrValue) => setA({ ...a, qrValue })} placeholder="Text of your QR code (blank = any)" placeholderTextColor={C.dim} style={s.input} />}
     <View style={[s.m, { justifyContent: 'space-between' }]}><View><Text style={s.mn}>Gentle wake</Text><Text style={{ color: C.dim }}>Volume rises slowly</Text></View>
       <Switch value={a.gentle} onValueChange={(gentle) => setA({ ...a, gentle })} trackColor={{ true: C.accent }} /></View>
-    <Btn t="Save alarm" onPress={() => onSave(a)} style={{ marginTop: 16 }} />
-    <Btn t="Cancel" kind="ghost" onPress={onCancel} style={{ marginTop: 10 }} />
+    <Btn t="Try this alarm now" kind="ghost" onPress={() => { player.pause(); setPlaying(null); onTest(a); }} style={{ marginTop: 6 }} />
+    <Btn t="Save alarm" onPress={() => { player.pause(); onSave(a); }} style={{ marginTop: 16 }} />
+    <Btn t="Cancel" kind="ghost" onPress={() => { try { player.pause(); } catch {} onCancel(); }} style={{ marginTop: 10 }} />
     {onDelete && <Btn t="Delete (asks first)" kind="ghost" onPress={onDelete} style={{ marginTop: 10 }} />}
   </ScrollView>);
 }

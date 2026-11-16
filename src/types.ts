@@ -1,8 +1,9 @@
+import type { SoundId } from './sounds';
 export type MissionId = 'math' | 'shake' | 'memory' | 'typing' | 'tilt' | 'squat' | 'qr' | 'photo';
 export type Alarm = {
   id: string; hour: number; minute: number; label: string; enabled: boolean;
   days: number[]; // 1=Sun..7=Sat (expo weekday). empty = one-time
-  missions: MissionId[]; notifIds: string[]; gentle: boolean; qrValue?: string;
+  missions: MissionId[]; notifIds: string[]; gentle: boolean; qrValue?: string; sound?: SoundId;
 };
 export const MISSIONS: { id: MissionId; name: string; desc: string; pro?: boolean }[] = [
   { id: 'math', name: 'Math', desc: 'Solve 3 sums' },
