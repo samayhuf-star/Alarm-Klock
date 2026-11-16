@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Vibration, BackHandler, Platform } from 'react-native';
+import { View, Text, StyleSheet, Vibration, Platform } from 'react-native';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'; import { useKeepAwake } from 'expo-keep-awake'; import * as Haptics from 'expo-haptics';
 import { Alarm, MissionId } from './types'; import { SOUND_SRC } from './sounds'; import { Btn } from './missions/ui'; import { Mission } from './missions'; import { C } from './theme';
 import { pickSurprise } from './logic';
@@ -22,10 +22,9 @@ export default function Ring({ alarm, onSolved, preview }: { alarm: Alarm; onSol
     const talk = setInterval(() => setLine((l) => (l + 1) % LINES.length), 5000);
     let v = alarm.gentle ? 0.15 : 1;
     const ramp = alarm.gentle ? setInterval(() => { v = Math.min(1, v + 0.1); player.volume = v; }, 6000) : undefined;
-    const back = preview ? undefined : BackHandler.addEventListener('hardwareBackPress', () => true);
-    return () => { [vib, keep, talk, ramp].forEach((t) => t && clearInterval(t)); back?.remove(); player.pause(); Vibration.cancel(); };
+    return () => { [vib, keep, talk, ramp].forEach((t) => t && clearInterval(t)); player.pause(); Vibration.cancel(); };
   }, []);
-  // Safety valve: if a mission does not register for 90s, offer plain math so the alarm can never trap you.
+  // Safety valve: if a mission does not register for 20s, offer plain math so the alarm can never trap you.
   useEffect(() => { setStuck(false); setFallback(false); const t = setTimeout(() => setStuck(true), 90000); return () => clearTimeout(t); }, [step]);
   const done = () => { if (step + 1 >= ms.length) onSolved(); else setStep(step + 1); };
   return (<View style={s.c}>
