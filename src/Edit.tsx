@@ -39,7 +39,7 @@ export default function Edit({ initial, pro, onSave, onCancel, onDelete, onNeedP
           <Text style={{ color: on ? C.accent : C.dim, fontSize: 22 }}>{on ? '●' : '○'}</Text></Pressable>); })}
     </View>))}
     {a.missions.includes('qr') && <TextInput value={a.qrValue || ''} onChangeText={(qrValue) => setA({ ...a, qrValue })} placeholder="Text of your QR code (blank = any)" placeholderTextColor={C.dim} style={s.input} />}
-    <View style={[s.m, { justifyContent: 'space-between' }]}><View><Text style={s.mn}>Gentle wake</Text><Text style={{ color: C.dim }}>Volume rises slowly</Text></View>
+    <View style={[s.m, { justifyContent: 'space-between' }]}><View><Text style={s.mn}>Gentle wake</Text><Text style={{ color: C.dim }}>Sound fades in over about 20 seconds</Text></View>
       <Switch value={a.gentle} onValueChange={(gentle) => setA({ ...a, gentle })} trackColor={{ true: C.accent }} /></View>
     <Btn t="Try this alarm now" kind="ghost" onPress={() => { player.pause(); setPlaying(null); onTest(a); }} style={{ marginTop: 6 }} />
     <Btn t="Save alarm" onPress={() => { player.pause(); onSave(a); }} style={{ marginTop: 16 }} />

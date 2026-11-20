@@ -4,17 +4,20 @@ import { Alarm } from './types';
 import { soundFile } from './sounds';
 import { planTriggers, minutesUntilNext, formatIn } from './logic';
 
+const channelId = (id: string, gentle?: boolean) => `alarms-${id}${gentle ? '-gentle' : ''}`;
 export async function initNotifications() {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
   });
   if (Platform.OS === 'android') {
     for (const id of ['classic', 'digital', 'siren', 'rise', 'chime']) {
-      await Notifications.setNotificationChannelAsync(`alarms-${id}`, {
-        name: `Alarms (${id})`, importance: Notifications.AndroidImportance.MAX,
-        sound: `${id}.wav`, vibrationPattern: [0, 500, 300, 500], bypassDnd: true,
-        lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
-      });
+      for (const gentle of [false, true]) {
+        await Notifications.setNotificationChannelAsync(channelId(id, gentle), {
+          name: `Alarms (${id}${gentle ? ', gentle' : ''})`, importance: Notifications.AndroidImportance.MAX,
+          sound: `${id}${gentle ? '-gentle' : ''}.wav`, vibrationPattern: [0, 500, 300, 500], bypassDnd: true,
+          lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
+        });
+      }
     }
   }
   const p = await Notifications.requestPermissionsAsync({ ios: { allowAlert: true, allowSound: true, allowCriticalAlerts: false } });
@@ -24,7 +27,7 @@ export async function initNotifications() {
 const content = (a: Alarm, n: number) => ({
   title: n === 0 ? (a.label || 'Wake up!') : `Still asleep? (${n})`,
   body: 'Open Alarm Klock to complete your mission and stop the alarm.',
-  sound: soundFile(a.sound), data: { alarmId: a.id },
+  sound: soundFile(a.sound, a.gentle), data: { alarmId: a.id },
   interruptionLevel: 'timeSensitive' as const, priority: Notifications.AndroidNotificationPriority.MAX,
 });
 
@@ -39,8 +42,8 @@ export async function scheduleAlarm(a: Alarm, opts: { skipTodayFollowUps?: boole
     ids.push(await Notifications.scheduleNotificationAsync({
       content: content(a, t.n),
       trigger: t.kind === 'date'
-        ? { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.date, channelId: `alarms-${a.sound || 'classic'}` }
-        : { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: t.weekday, hour: t.hour, minute: t.minute, channelId: `alarms-${a.sound || 'classic'}` },
+        ? { type: Notifications.SchedulableTriggerInputTypes.DATE, date: t.date, channelId: channelId(a.sound || 'classic', a.gentle) }
+        : { type: Notifications.SchedulableTriggerInputTypes.WEEKLY, weekday: t.weekday, hour: t.hour, minute: t.minute, channelId: channelId(a.sound || 'classic', a.gentle) },
     }));
   }
   return ids;

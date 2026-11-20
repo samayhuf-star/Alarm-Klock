@@ -53,7 +53,12 @@
             "./assets/sounds/digital.wav",
             "./assets/sounds/siren.wav",
             "./assets/sounds/rise.wav",
-            "./assets/sounds/chime.wav"
+            "./assets/sounds/chime.wav",
+            "./assets/sounds/classic-gentle.wav",
+            "./assets/sounds/digital-gentle.wav",
+            "./assets/sounds/siren-gentle.wav",
+            "./assets/sounds/rise-gentle.wav",
+            "./assets/sounds/chime-gentle.wav"
           ]
         }
       ],
