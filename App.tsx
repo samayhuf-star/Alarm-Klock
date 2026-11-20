@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, FlatList, Switch, Alert, StyleSheet, AppState } from 'react-native';
+import { View, Text, Pressable, FlatList, Switch, Alert, StyleSheet, AppState, Linking } from 'react-native';
 import { StatusBar } from 'expo-status-bar'; import * as Notifications from 'expo-notifications';
 import { Alarm } from './src/types'; import { loadAlarms, saveAlarms, loadStreak, saveStreak } from './src/store';
 import { pendingNativeAlarmId } from './src/native';
@@ -7,6 +7,9 @@ import { initNotifications, scheduleAlarm, cancelAlarm, silenceFollowUps, nextRi
 import { initPurchases, showPaywall, openCustomerCenter, restore } from './src/purchases';
 import { backupsPerAlarm, applyEdit, canAddAlarm, SLEEP_PRESETS, alarmFromDuration, isExpiredTemp, nextStreak, Streak } from './src/logic';
 import Edit from './src/Edit'; import Ring from './src/Ring'; import { C } from './src/theme';
+
+const PRIVACY_URL = 'https://machine.esamay.live/alarm-klock/privacy';
+const TERMS_URL = 'https://machine.esamay.live/alarm-klock/terms';
 
 const blank = (): Alarm => ({ id: String(Date.now()), hour: 7, minute: 0, label: '', enabled: true, days: [2, 3, 4, 5, 6], missions: ['math'], notifIds: [], gentle: true });
 
@@ -75,6 +78,12 @@ export default function App() {
         <FlatList horizontal showsHorizontalScrollIndicator={false} data={SLEEP_PRESETS} keyExtractor={(p) => p.id} renderItem={({ item: p }) => (
           <Pressable onPress={() => startSleep(p)} style={s.chip}><Text style={{ fontSize: 22 }}>{p.emoji}</Text><Text style={{ color: C.text, fontWeight: '800' }}>{p.minutes < 60 ? `${p.minutes}m` : `${p.minutes / 60}h`}</Text><Text style={{ color: C.dim, fontSize: 11 }}>{p.label}</Text></Pressable>)} /></View>} keyExtractor={(a) => a.id} contentContainerStyle={{ paddingBottom: 120 }}
       ListEmptyComponent={<Text style={{ color: C.dim, textAlign: 'center', marginTop: 60 }}>No alarms yet. Tap + to add one.</Text>}
+      ListFooterComponent={<View style={{ marginTop: 16, paddingHorizontal: 8 }}>
+        <Text style={{ color: C.dim, fontSize: 12, textAlign: 'center', lineHeight: 17 }}>Pro starts with a 7-day free trial, then renews automatically at the price shown on the Pro screen until you cancel. Cancel any time in your Apple ID subscription settings, at least 24 hours before the period ends.</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 8 }}>
+          <Pressable onPress={() => Linking.openURL(TERMS_URL)} hitSlop={8}><Text style={{ color: C.accent, fontSize: 12, fontWeight: '700' }}>Terms of Use</Text></Pressable>
+          <Text style={{ color: C.dim, fontSize: 12 }}>  ·  </Text>
+          <Pressable onPress={() => Linking.openURL(PRIVACY_URL)} hitSlop={8}><Text style={{ color: C.accent, fontSize: 12, fontWeight: '700' }}>Privacy Policy</Text></Pressable></View></View>}
       renderItem={({ item: a }) => (<Pressable onPress={() => setEditing({ a, isNew: false })} style={s.card}>
         <View style={{ flex: 1 }}><Text style={[s.t, !a.enabled && { color: C.dim }]}>{String(a.hour).padStart(2, '0')}:{String(a.minute).padStart(2, '0')}</Text>
           <Text style={s.lab}>{a.label || 'Alarm'} · {a.missions.length} mission{a.missions.length === 1 ? '' : 's'}{a.enabled ? ' · ' + nextRing(a) : ''}</Text></View>
