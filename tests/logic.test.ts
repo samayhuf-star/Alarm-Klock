@@ -92,3 +92,6 @@ test('FIX4: pending notifications stay under the iOS limit', () => {
   assert.ok(total <= 64, `total ${total}`); assert.ok(b >= 3);
   assert.equal(backupsPerAlarm([base]), 6); assert.equal(backupsPerAlarm([]), 6);
 });
+
+import { toIsoWeekday } from '../src/logic';
+test('weekday mapping app(1=Sun) -> ISO(1=Mon)', () => { assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(toIsoWeekday), [7, 1, 2, 3, 4, 5, 6]); });

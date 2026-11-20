@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Vibration, Platform } from 'react-native';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio'; import { useKeepAwake } from 'expo-keep-awake'; import * as Haptics from 'expo-haptics';
 import { Alarm, MissionId } from './types'; import { SOUND_SRC } from './sounds'; import { Btn } from './missions/ui'; import { Mission } from './missions'; import { C } from './theme';
-import { pickSurprise } from './logic';
+import { pickSurprise } from './logic'; import { holdNative } from './native';
 const LINES = ['Up up up! 🔥', 'Your bed is lying to you.', 'Finish the mission. Then you are free.', 'Future you says thanks.', 'No snooze. No mercy. 💪', 'Almost there. Keep going!'];
 export default function Ring({ alarm, onSolved, preview }: { alarm: Alarm; onSolved: () => void; preview?: boolean }) {
   useKeepAwake();
@@ -19,10 +19,12 @@ export default function Ring({ alarm, onSolved, preview }: { alarm: Alarm; onSol
     const vib = Platform.OS === 'ios' ? setInterval(() => { Vibration.vibrate(); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); }, 1000) : undefined;
     // Keep the audio from being paused by the system (calls, other audio) and keep volume maxed in app.
     const keep = setInterval(() => { try { if (!player.playing) player.play(); if (!alarm.gentle) player.volume = 1; } catch {} }, 2000);
+    // Native alarm: while the user is in the app doing missions, quiet the system ring; if the app dies, the ring returns natively.
+    const hold = preview ? undefined : setInterval(() => holdNative(alarm.id, 45), 20000); if (!preview) holdNative(alarm.id, 45);
     const talk = setInterval(() => setLine((l) => (l + 1) % LINES.length), 5000);
     let v = alarm.gentle ? 0.15 : 1;
     const ramp = alarm.gentle ? setInterval(() => { v = Math.min(1, v + 0.1); player.volume = v; }, 6000) : undefined;
-    return () => { [vib, keep, talk, ramp].forEach((t) => t && clearInterval(t)); player.pause(); Vibration.cancel(); };
+    return () => { [vib, keep, talk, ramp, hold].forEach((t) => t && clearInterval(t)); player.pause(); Vibration.cancel(); };
   }, []);
   // Safety valve: if a mission does not register for 20s, offer plain math so the alarm can never trap you.
   useEffect(() => { setStuck(false); setFallback(false); const t = setTimeout(() => setStuck(true), 90000); return () => clearTimeout(t); }, [step]);

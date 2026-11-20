@@ -41,6 +41,9 @@ export function planTriggers(a: Alarm, now: Date = new Date(), backups: number =
   return out;
 }
 
+/** Pure: app weekdays are 1=Sun..7=Sat; AlarmKit module uses ISO 1=Mon..7=Sun. */
+export const toIsoWeekday = (d: number) => (d === 1 ? 7 : d - 1);
+
 /** Pure: minutes until the next main ring, or null if disabled. */
 export function minutesUntilNext(a: Alarm, now: Date = new Date()): number | null {
   if (!a.enabled) return null;

@@ -45,6 +45,7 @@
     },
     "plugins": [
       ["expo-audio", { "enableBackgroundPlayback": false }],
+      ["react-native-alarm-scheduler", { "alarmKitUsageDescription": "Alarm Klock uses system alarms so your wake-up alarm rings on the lock screen, even when the app is closed." }],
       [
         "expo-notifications",
         {

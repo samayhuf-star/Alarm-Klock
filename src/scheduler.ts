@@ -2,6 +2,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { Alarm } from './types';
 import { soundFile } from './sounds';
+import { scheduleNative, cancelNative, completeNative } from './native';
 import { planTriggers, minutesUntilNext, formatIn } from './logic';
 
 const channelId = (id: string, gentle?: boolean) => `alarms-${id}${gentle ? '-gentle' : ''}`;
@@ -34,6 +35,8 @@ const content = (a: Alarm, n: number) => ({
 // Backup alarms: each alarm schedules the main ring plus follow-ups one minute apart (count capped by backupsPerAlarm to stay under iOS's 64 pending limit).
 export async function scheduleAlarm(a: Alarm, opts: { skipTodayFollowUps?: boolean; backups?: number } = {}): Promise<string[]> {
   await cancelAlarm(a);
+  // iOS 26+: a real system alarm (AlarmKit) rings on the lock screen with the app closed. No notification backups needed then.
+  if (await scheduleNative(a)) return [];
   const ids: string[] = [];
   const now = new Date(); const today = now.getDay() + 1; const nowMin = now.getHours() * 60 + now.getMinutes();
   for (const t of planTriggers(a, new Date(), opts.backups)) {
@@ -50,10 +53,12 @@ export async function scheduleAlarm(a: Alarm, opts: { skipTodayFollowUps?: boole
 }
 
 export async function cancelAlarm(a: Alarm) {
+  await cancelNative(a.id);
   for (const id of a.notifIds) await Notifications.cancelScheduledNotificationAsync(id).catch(() => {});
 }
 // After a mission is completed, silence this alarm's pending follow-up rings for today.
 export async function silenceFollowUps(a: Alarm) {
+  await completeNative(a.id); // ends the AlarmKit ring (no-op where unsupported)
   await Notifications.dismissAllNotificationsAsync();
   if (a.days.length === 0) await cancelAlarm(a);
 }

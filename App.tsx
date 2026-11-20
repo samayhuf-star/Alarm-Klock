@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, FlatList, Switch, Alert, StyleSheet } from 'react-native';
+import { View, Text, Pressable, FlatList, Switch, Alert, StyleSheet, AppState } from 'react-native';
 import { StatusBar } from 'expo-status-bar'; import * as Notifications from 'expo-notifications';
 import { Alarm } from './src/types'; import { loadAlarms, saveAlarms, loadStreak, saveStreak } from './src/store';
+import { pendingNativeAlarmId } from './src/native';
 import { initNotifications, scheduleAlarm, cancelAlarm, silenceFollowUps, nextRing } from './src/scheduler';
 import { initPurchases, showPaywall, openCustomerCenter, restore } from './src/purchases';
 import { backupsPerAlarm, applyEdit, canAddAlarm, SLEEP_PRESETS, alarmFromDuration, isExpiredTemp, nextStreak, Streak } from './src/logic';
@@ -31,10 +32,13 @@ export default function App() {
       for (const x of list.filter((y) => isExpiredTemp(y))) await cancelAlarm(x);
       setAlarms(out); saveAlarms(out);
     });
+    // A native (AlarmKit) ring opened the app: reconcile on launch and on every return to foreground.
+    const syncNative = () => pendingNativeAlarmId().then((id) => id && setTimeout(() => ring(id), 400));
+    syncNative(); const appSub = AppState.addEventListener('change', (st) => { if (st === 'active') syncNative(); });
     const r = Notifications.addNotificationResponseReceivedListener((x) => ring(x.notification.request.content.data?.alarmId as string));
     const f = Notifications.addNotificationReceivedListener((x) => ring(x.request.content.data?.alarmId as string));
     Notifications.getLastNotificationResponseAsync().then((x) => x && ring(x.notification.request.content.data?.alarmId as string));
-    return () => { r.remove(); f.remove(); };
+    return () => { r.remove(); f.remove(); appSub.remove(); };
   }, []);
 
   const save = async (a: Alarm, isNew: boolean) => {
