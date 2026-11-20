@@ -58,3 +58,37 @@ test('streak continues, resets and ignores same day', () => {
   assert.deepEqual(nextStreak({ count: 0, last: '' }, d), { count: 1, last: dayKey(d) });
 });
 test('surprise picks within pool', () => { assert.equal(pickSurprise(() => 0), 'math'); assert.equal(pickSurprise(() => 0.999), 'shake'); });
+
+import { backupsPerAlarm, applyEdit } from '../src/logic';
+test('FIX1: one-time follow-ups never fire before the main ring (set 7:00 at 7:02)', () => {
+  const now = new Date(2026, 10, 15, 7, 2, 30);
+  const t: any[] = planTriggers(base, now);
+  const main = t[0].date.getTime();
+  assert.equal(t[0].date.getDate(), 16);
+  t.forEach((x, i) => { assert.equal(x.date.getTime(), main + i * 60000); assert.ok(x.date.getTime() >= main); });
+});
+test('FIX1: one-time 23:59 follow-ups roll to next day together', () => {
+  const t: any[] = planTriggers({ ...base, hour: 23, minute: 59 }, at(12, 0));
+  assert.equal(t[1].date.getHours(), 0); assert.equal(t[1].date.getDate(), 16);
+});
+test('FIX2: editing a sleep timer recomputes fireAt', () => {
+  const now = new Date(2026, 10, 15, 22, 0, 0);
+  const s = alarmFromDuration('Nap', 30, now); // 22:30
+  const e = applyEdit({ ...s, hour: 23, minute: 15 }, now);
+  assert.equal(new Date(e.fireAt!).getHours(), 23); assert.equal(new Date(e.fireAt!).getMinutes(), 15);
+  assert.equal((planTriggers(e, now)[0] as any).date.getTime(), e.fireAt);
+});
+test('FIX2: edited sleep time already passed today rolls to tomorrow; normal alarms untouched', () => {
+  const now = new Date(2026, 10, 15, 22, 0, 0);
+  const e = applyEdit({ ...alarmFromDuration('Nap', 30, now), hour: 6, minute: 0 }, now);
+  assert.equal(new Date(e.fireAt!).getDate(), 16);
+  assert.equal(applyEdit(base, now), base);
+});
+test('FIX4: pending notifications stay under the iOS limit', () => {
+  const daily = (id: string) => ({ ...base, id, days: [1, 2, 3, 4, 5, 6, 7] });
+  const list = [daily('a'), daily('b'), alarmFromDuration('Nap', 30)];
+  const b = backupsPerAlarm(list);
+  const total = list.reduce((n, x) => n + planTriggers(x, new Date(), b).length, 0);
+  assert.ok(total <= 64, `total ${total}`); assert.ok(b >= 3);
+  assert.equal(backupsPerAlarm([base]), 6); assert.equal(backupsPerAlarm([]), 6);
+});

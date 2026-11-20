@@ -28,12 +28,12 @@ const content = (a: Alarm, n: number) => ({
   interruptionLevel: 'timeSensitive' as const, priority: Notifications.AndroidNotificationPriority.MAX,
 });
 
-// Backup alarms: each alarm schedules the main ring plus 3 follow-ups, one minute apart.
-export async function scheduleAlarm(a: Alarm, opts: { skipTodayFollowUps?: boolean } = {}): Promise<string[]> {
+// Backup alarms: each alarm schedules the main ring plus follow-ups one minute apart (count capped by backupsPerAlarm to stay under iOS's 64 pending limit).
+export async function scheduleAlarm(a: Alarm, opts: { skipTodayFollowUps?: boolean; backups?: number } = {}): Promise<string[]> {
   await cancelAlarm(a);
   const ids: string[] = [];
   const now = new Date(); const today = now.getDay() + 1; const nowMin = now.getHours() * 60 + now.getMinutes();
-  for (const t of planTriggers(a)) {
+  for (const t of planTriggers(a, new Date(), opts.backups)) {
     // After solving, drop today's remaining follow-ups (restored when alarms are rescheduled on next app launch).
     if (opts.skipTodayFollowUps && t.kind === 'weekly' && t.n > 0 && t.weekday === today && t.hour * 60 + t.minute >= nowMin) continue;
     ids.push(await Notifications.scheduleNotificationAsync({

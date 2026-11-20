@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar'; import * as Notifications from 'exp
 import { Alarm } from './src/types'; import { loadAlarms, saveAlarms, loadStreak, saveStreak } from './src/store';
 import { initNotifications, scheduleAlarm, cancelAlarm, silenceFollowUps, nextRing } from './src/scheduler';
 import { initPurchases, showPaywall, openCustomerCenter, restore } from './src/purchases';
-import { canAddAlarm, SLEEP_PRESETS, alarmFromDuration, isExpiredTemp, nextStreak, Streak } from './src/logic';
+import { backupsPerAlarm, applyEdit, canAddAlarm, SLEEP_PRESETS, alarmFromDuration, isExpiredTemp, nextStreak, Streak } from './src/logic';
 import Edit from './src/Edit'; import Ring from './src/Ring'; import { C } from './src/theme';
 
 const blank = (): Alarm => ({ id: String(Date.now()), hour: 7, minute: 0, label: '', enabled: true, days: [2, 3, 4, 5, 6], missions: ['math'], notifIds: [], gentle: true });
@@ -27,7 +27,7 @@ export default function App() {
     initPurchases(setPro); initNotifications().then(setOk); loadStreak().then(setStreak);
     loadAlarms().then(async (list) => {
       const live = list.filter((x) => !isExpiredTemp(x)); const out: Alarm[] = [];
-      for (const x of live) out.push(x.enabled ? { ...x, notifIds: await scheduleAlarm(x) } : x); // re-arm everything on launch
+      const backups = backupsPerAlarm(live); for (const x of live) out.push(x.enabled ? { ...x, notifIds: await scheduleAlarm(x, { backups }) } : x); // re-arm everything on launch
       for (const x of list.filter((y) => isExpiredTemp(y))) await cancelAlarm(x);
       setAlarms(out); saveAlarms(out);
     });
@@ -39,23 +39,25 @@ export default function App() {
 
   const save = async (a: Alarm, isNew: boolean) => {
     if (isNew && !canAddAlarm(alarms.filter((x) => !x.temp).length, pro)) { if (!(await showPaywall())) return; }
-    const ids = await scheduleAlarm({ ...a, notifIds: a.notifIds });
-    const saved = { ...a, notifIds: ids };
+    const edited = applyEdit(a); // sleep timers: recompute the exact fire time from the edited hour:minute
+    const next = isNew ? [...alarms, edited] : alarms.map((x) => (x.id === a.id ? edited : x));
+    const ids = await scheduleAlarm({ ...edited, notifIds: a.notifIds }, { backups: backupsPerAlarm(next) });
+    const saved = { ...edited, notifIds: ids };
     await persist(isNew ? [...alarms, saved] : alarms.map((x) => (x.id === a.id ? saved : x))); setEditing(null);
   };
-  const toggle = async (a: Alarm, enabled: boolean) => { const n = { ...a, enabled }; n.notifIds = await scheduleAlarm(n); await persist(alarms.map((x) => (x.id === a.id ? n : x))); };
+  const toggle = async (a: Alarm, enabled: boolean) => { const n = { ...a, enabled }; n.notifIds = await scheduleAlarm(n, { backups: backupsPerAlarm(alarms.map((x) => (x.id === a.id ? n : x))) }); await persist(alarms.map((x) => (x.id === a.id ? n : x))); };
   const del = (a: Alarm) => Alert.alert('Delete alarm?', 'This cannot be undone.', [{ text: 'Keep', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { await cancelAlarm(a); await persist(alarms.filter((x) => x.id !== a.id)); setEditing(null); } }]);
   const solved = async () => {
     if (!ringing) return; const r = ringing; solvedAt.current[r.id] = Date.now(); ringingId.current = null; setRinging(null); // stop at once, clean up after
     await silenceFollowUps(r);
     if (r.temp || r.days.length === 0) { const rest = alarms.filter((x) => x.id !== r.id || (!r.temp && r.days.length > 0)); await persist(r.temp ? rest : alarms.map((x) => (x.id === r.id ? { ...x, enabled: false, notifIds: [] } : x))); }
-    else { const ids = await scheduleAlarm(r, { skipTodayFollowUps: true }); await persist(alarms.map((x) => (x.id === r.id ? { ...x, notifIds: ids } : x))); }
+    else { const ids = await scheduleAlarm(r, { skipTodayFollowUps: true, backups: backupsPerAlarm(alarms) }); await persist(alarms.map((x) => (x.id === r.id ? { ...x, notifIds: ids } : x))); }
     const ns = nextStreak(streak); setStreak(ns); await saveStreak(ns);
   };
   const startSleep = (p: (typeof SLEEP_PRESETS)[number]) => {
     const t = alarmFromDuration(p.label, p.minutes);
     const at = `${String(t.hour).padStart(2, '0')}:${String(t.minute).padStart(2, '0')}`;
-    Alert.alert(`${p.emoji} ${p.label}`, `Wake you at ${at}. You will have to finish a mission to stop it.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Start', onPress: async () => { const ids = await scheduleAlarm(t); await persist([...alarms, { ...t, notifIds: ids }]); } }]);
+    Alert.alert(`${p.emoji} ${p.label}`, `Wake you at ${at}. You will have to finish a mission to stop it.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Start', onPress: async () => { const ids = await scheduleAlarm(t, { backups: backupsPerAlarm([...alarms, t]) }); await persist([...alarms, { ...t, notifIds: ids }]); } }]);
   };
   if (test) return <Ring alarm={test} preview onSolved={() => setTest(null)} />;
   if (ringing) return <Ring alarm={ringing} onSolved={solved} />;

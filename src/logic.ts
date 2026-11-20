@@ -4,28 +4,39 @@ export type Trigger =
   | { kind: 'date'; date: Date; n: number }
   | { kind: 'weekly'; weekday: number; hour: number; minute: number; n: number };
 
-export const BACKUPS = 6; // main ring + 5 follow-ups, one minute apart (iOS allows 64 pending notifications)
+export const BACKUPS = 6; // main ring + 5 follow-ups, one minute apart (maximum per alarm)
+export const IOS_PENDING_LIMIT = 64; // iOS keeps only the 64 soonest pending local notifications
+export const PENDING_BUDGET = 60; // stay under the limit, leaving headroom
+
+/** Pure: how many notifications (main + follow-ups) each alarm may use so ALL alarms together stay under the iOS limit.
+ *  A repeating alarm costs one request per selected weekday per notification; one-time alarms and sleep timers cost one. */
+export function backupsPerAlarm(alarms: Alarm[]): number {
+  const slots = alarms.filter((x) => x.enabled).reduce((n, x) => n + (x.fireAt || x.days.length === 0 ? 1 : x.days.length), 0);
+  if (slots === 0) return BACKUPS;
+  return Math.max(1, Math.min(BACKUPS, Math.floor(PENDING_BUDGET / slots)));
+}
 
 /** Pure: which notification triggers an alarm needs. weekday: 1=Sun..7=Sat. */
-export function planTriggers(a: Alarm, now: Date = new Date()): Trigger[] {
+export function planTriggers(a: Alarm, now: Date = new Date(), backups: number = BACKUPS): Trigger[] {
   if (!a.enabled) return [];
   const out: Trigger[] = [];
   if (a.fireAt) {
-    for (let n = 0; n < BACKUPS; n++) { const d = new Date(a.fireAt + n * 60000); if (d.getTime() > now.getTime()) out.push({ kind: 'date', date: d, n }); }
+    for (let n = 0; n < backups; n++) { const d = new Date(a.fireAt + n * 60000); if (d.getTime() > now.getTime()) out.push({ kind: 'date', date: d, n }); }
     return out;
   }
-  for (let n = 0; n < BACKUPS; n++) {
+  // One-time alarm: decide the main ring's date ONCE, then place every follow-up exactly n minutes after it,
+  // so a follow-up can never fire before (or on a different day than) the main alarm.
+  let mainRing: Date | null = null;
+  if (a.days.length === 0) {
+    mainRing = new Date(now); mainRing.setHours(a.hour, a.minute, 0, 0);
+    if (mainRing.getTime() <= now.getTime()) mainRing.setDate(mainRing.getDate() + 1);
+  }
+  for (let n = 0; n < backups; n++) {
+    if (mainRing) { out.push({ kind: 'date', date: new Date(mainRing.getTime() + n * 60000), n }); continue; }
     const total = a.hour * 60 + a.minute + n;
     const h = Math.floor(total / 60) % 24, m = total % 60;
     const dayShift = total >= 1440 ? 1 : 0;
-    if (a.days.length === 0) {
-      const d = new Date(now); d.setHours(h, m, 0, 0);
-      if (dayShift) d.setDate(d.getDate() + 1);
-      if (d.getTime() <= now.getTime()) d.setDate(d.getDate() + 1);
-      out.push({ kind: 'date', date: d, n });
-    } else {
-      for (const day of a.days) out.push({ kind: 'weekly', weekday: ((day - 1 + dayShift) % 7) + 1, hour: h, minute: m, n });
-    }
+    for (const day of a.days) out.push({ kind: 'weekly', weekday: ((day - 1 + dayShift) % 7) + 1, hour: h, minute: m, n });
   }
   return out;
 }
@@ -65,6 +76,14 @@ export function alarmFromDuration(label: string, minutes: number, now: Date = ne
   const fireAt = Math.ceil(ms / 60000) * 60000;
   const d = new Date(fireAt);
   return { id: `sleep-${fireAt}`, hour: d.getHours(), minute: d.getMinutes(), label: `${label} · ${durationLabel(minutes)}`, enabled: true, days: [], missions: ['math'], notifIds: [], gentle: false, temp: true, fireAt };
+}
+/** Pure: apply an edit. A sleep timer rings at its stored fireAt, so when its time is edited fireAt is recomputed
+ *  from the new hour:minute (next occurrence); other alarms are returned unchanged. */
+export function applyEdit(a: Alarm, now: Date = new Date()): Alarm {
+  if (!a.temp) return a;
+  const d = new Date(now); d.setHours(a.hour, a.minute, 0, 0);
+  if (d.getTime() <= now.getTime()) d.setDate(d.getDate() + 1);
+  return { ...a, days: [], fireAt: d.getTime(), id: a.id };
 }
 export const isExpiredTemp = (a: Alarm, now: Date = new Date()) => !!a.temp && !!a.fireAt && a.fireAt + BACKUPS * 60000 < now.getTime();
 
