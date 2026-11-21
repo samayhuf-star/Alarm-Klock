@@ -6,6 +6,7 @@ import { pendingNativeAlarmId } from './src/native';
 import { initNotifications, scheduleAlarm, cancelAlarm, silenceFollowUps, nextRing } from './src/scheduler';
 import { initPurchases, showPaywall, openCustomerCenter, restore } from './src/purchases';
 import { backupsPerAlarm, applyEdit, canAddAlarm, SLEEP_PRESETS, alarmFromDuration, isExpiredTemp, nextStreak, Streak } from './src/logic';
+import AsyncStorage from '@react-native-async-storage/async-storage'; import Onboarding from './src/Onboarding';
 import Edit from './src/Edit'; import Ring from './src/Ring'; import { C } from './src/theme';
 
 const PRIVACY_URL = 'https://machine.esamay.live/alarm-klock/privacy';
@@ -16,7 +17,7 @@ const blank = (): Alarm => ({ id: String(Date.now()), hour: 7, minute: 0, label:
 export default function App() {
   const [alarms, setAlarms] = useState<Alarm[]>([]); const [pro, setPro] = useState(false);
   const [editing, setEditing] = useState<{ a: Alarm; isNew: boolean } | null>(null); const [ringing, setRinging] = useState<Alarm | null>(null); const [test, setTest] = useState<Alarm | null>(null);
-  const [ok, setOk] = useState(true); const [streak, setStreak] = useState<Streak>({ count: 0, last: '' });
+  const [onb, setOnb] = useState<boolean | null>(null); const [ok, setOk] = useState(true); const [streak, setStreak] = useState<Streak>({ count: 0, last: '' });
 
   const persist = useCallback(async (next: Alarm[]) => { setAlarms(next); await saveAlarms(next); }, []);
   const solvedAt = React.useRef<Record<string, number>>({}); const ringingId = React.useRef<string | null>(null);
@@ -66,6 +67,10 @@ export default function App() {
     const at = `${String(t.hour).padStart(2, '0')}:${String(t.minute).padStart(2, '0')}`;
     Alert.alert(`${p.emoji} ${p.label}`, `Wake you at ${at}. You will have to finish a mission to stop it.`, [{ text: 'Cancel', style: 'cancel' }, { text: 'Start', onPress: async () => { const ids = await scheduleAlarm(t, { backups: backupsPerAlarm([...alarms, t]) }); await persist([...alarms, { ...t, notifIds: ids }]); } }]);
   };
+  useEffect(() => { AsyncStorage.getItem('onboarded.v1').then((v) => setOnb(!v)).catch(() => setOnb(false)); }, []);
+  const finishOnb = async (wantsPro: boolean) => { await AsyncStorage.setItem('onboarded.v1', '1'); setOnb(false); if (wantsPro) await showPaywall(); };
+  if (onb === null) return <View style={{ flex: 1, backgroundColor: C.bg }} />;
+  if (onb) return <Onboarding onDone={finishOnb} />;
   if (test) return <Ring alarm={test} preview onSolved={() => setTest(null)} />;
   if (ringing) return <Ring alarm={ringing} onSolved={solved} />;
   if (editing) return <Edit initial={editing.a} pro={pro} onSave={(a) => save(a, editing.isNew)} onCancel={() => setEditing(null)} onDelete={editing.isNew ? undefined : () => del(editing.a)} onNeedPro={showPaywall} onTest={setTest} />;
@@ -79,7 +84,7 @@ export default function App() {
           <Pressable onPress={() => startSleep(p)} style={s.chip}><Text style={{ fontSize: 22 }}>{p.emoji}</Text><Text style={{ color: C.text, fontWeight: '800' }}>{p.minutes < 60 ? `${p.minutes}m` : `${p.minutes / 60}h`}</Text><Text style={{ color: C.dim, fontSize: 11 }}>{p.label}</Text></Pressable>)} /></View>} keyExtractor={(a) => a.id} contentContainerStyle={{ paddingBottom: 120 }}
       ListEmptyComponent={<Text style={{ color: C.dim, textAlign: 'center', marginTop: 60 }}>No alarms yet. Tap + to add one.</Text>}
       ListFooterComponent={<View style={{ marginTop: 16, paddingHorizontal: 8 }}>
-        <Text style={{ color: C.dim, fontSize: 12, textAlign: 'center', lineHeight: 17 }}>Pro starts with a 7-day free trial, then renews automatically at the price shown on the Pro screen until you cancel. Cancel any time in your Apple ID subscription settings, at least 24 hours before the period ends.</Text>
+        <Text style={{ color: C.dim, fontSize: 12, textAlign: 'center', lineHeight: 17 }}>Pro renews automatically at the price shown on the Pro screen until you cancel. Cancel any time in your Apple ID subscription settings, at least 24 hours before the period ends.</Text>
         <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 8 }}>
           <Pressable onPress={() => Linking.openURL(TERMS_URL)} hitSlop={8}><Text style={{ color: C.accent, fontSize: 12, fontWeight: '700' }}>Terms of Use</Text></Pressable>
           <Text style={{ color: C.dim, fontSize: 12 }}>  ·  </Text>
