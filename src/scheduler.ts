@@ -5,7 +5,7 @@ import { soundFile } from './sounds';
 import { scheduleNative, cancelNative, completeNative } from './native';
 import { planTriggers, minutesUntilNext, formatIn } from './logic';
 
-const channelId = (id: string, gentle?: boolean) => `alarms-${id}${gentle ? '-gentle' : ''}`;
+const channelId = (id: string, gentle?: boolean) => `alarms-${id}${gentle ? '_gentle' : ''}`;
 export async function initNotifications() {
   Notifications.setNotificationHandler({
     handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
@@ -15,7 +15,7 @@ export async function initNotifications() {
       for (const gentle of [false, true]) {
         await Notifications.setNotificationChannelAsync(channelId(id, gentle), {
           name: `Alarms (${id}${gentle ? ', gentle' : ''})`, importance: Notifications.AndroidImportance.MAX,
-          sound: `${id}${gentle ? '-gentle' : ''}.wav`, vibrationPattern: [0, 500, 300, 500], bypassDnd: true,
+          sound: `${id}${gentle ? '_gentle' : ''}.wav`, vibrationPattern: [0, 500, 300, 500], bypassDnd: true,
           lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
         });
       }

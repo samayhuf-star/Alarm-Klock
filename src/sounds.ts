@@ -11,4 +11,4 @@ export const SOUND_SRC = {
   siren: require('../assets/sounds/siren.wav'), rise: require('../assets/sounds/rise.wav'), chime: require('../assets/sounds/chime.wav'),
 } as const;
 // Gentle wake: iOS/Android can't change a notification sound's volume, so gentle alarms use pre-rendered fade-in versions.
-export const soundFile = (id?: string, gentle?: boolean) => `${id && id in SOUND_SRC ? id : 'classic'}${gentle ? '-gentle' : ''}.wav`;
+export const soundFile = (id?: string, gentle?: boolean) => `${id && id in SOUND_SRC ? id : 'classic'}${gentle ? '_gentle' : ''}.wav`;
