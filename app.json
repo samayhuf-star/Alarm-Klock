@@ -33,7 +33,8 @@
           }
         ]
       },
-      "icon": "./assets/icon.png"
+      "icon": "./assets/icon.png",
+      "buildNumber": "1"
     },
     "android": {
       "package": "com.samay.alarmklock",
@@ -56,7 +57,9 @@
       [
         "expo-audio",
         {
-          "enableBackgroundPlayback": false
+          "enableBackgroundPlayback": false,
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       [
@@ -85,7 +88,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Alarm Klock uses the camera for photo and QR wake-up missions."
+          "cameraPermission": "Alarm Klock uses the camera for photo and QR wake-up missions.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
         }
       ],
       [
@@ -97,7 +102,9 @@
     "extra": {
       "eas": {
         "projectId": "e21bc4e3-e21d-4ca8-951e-66a795378119"
-      }
+      },
+      "privacyPolicyUrl": "https://machine.esamay.live/alarm-klock/privacy",
+      "supportUrl": "https://machine.esamay.live/alarm-klock/support"
     },
     "owner": "krosz",
     "updates": {
