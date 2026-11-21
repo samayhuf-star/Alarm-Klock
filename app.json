@@ -3,6 +3,8 @@
     "name": "Alarm Klock",
     "slug": "alarm-klock",
     "version": "1.0.0",
+    "description": "Alarm Klock is a wake-up alarm with missions (shake, QR, photo, squats, brain puzzles) that make sure you are really awake.",
+    "icon": "./assets/icon.png",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "scheme": "alarmklock",
@@ -30,7 +32,8 @@
             ]
           }
         ]
-      }
+      },
+      "icon": "./assets/icon.png"
     },
     "android": {
       "package": "com.samay.alarmklock",
@@ -41,7 +44,13 @@
         "POST_NOTIFICATIONS",
         "WAKE_LOCK",
         "android.permission.ACTIVITY_RECOGNITION"
-      ]
+      ],
+      "versionCode": 1,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
     },
     "plugins": [
       [
