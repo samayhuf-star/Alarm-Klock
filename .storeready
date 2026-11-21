@@ -1,0 +1,12 @@
+{
+  "demoAccount": {
+    "loginType": "email",
+    "email": "",
+    "password": ""
+  },
+  "appReviewNotes": "Alarm Klock has no accounts or login, so no demo account is needed. Set an alarm, pick a mission, and use the ring preview to see it.",
+  "privacyPolicyUrl": "https://machine.esamay.live/alarm-klock/privacy",
+  "supportUrl": "https://machine.esamay.live/alarm-klock/support",
+  "screenshotsPath": "./store-shots",
+  "noLogin": true
+}
