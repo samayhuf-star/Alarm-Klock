@@ -14,7 +14,10 @@
       "infoPlist": {
         "NSCameraUsageDescription": "Alarm Klock uses the camera for photo and QR wake-up missions.",
         "NSMotionUsageDescription": "Alarm Klock uses motion sensors for shake, tilt and squat missions.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       },
       "privacyManifests": {
         "NSPrivacyAccessedAPITypes": [
@@ -34,7 +37,10 @@
         ]
       },
       "icon": "./assets/icon.png",
-      "buildNumber": "1"
+      "buildNumber": "1",
+      "entitlements": {
+        "aps-environment": "production"
+      }
     },
     "android": {
       "package": "com.samay.alarmklock",
@@ -54,6 +60,13 @@
       }
     },
     "plugins": [
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "production",
+          "disableLocation": true
+        }
+      ],
       [
         "expo-audio",
         {
