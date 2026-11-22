@@ -12,6 +12,7 @@ export default function Ring({ alarm, onSolved, preview }: { alarm: Alarm; onSol
   const ms = useMemo<MissionId[]>(() => (alarm.missions.length ? alarm.missions : ['math' as MissionId]).map((m) => (m === 'surprise' ? (pickSurprise() as MissionId) : m)), [alarm.id]);
   useEffect(() => {
     setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: false }).catch(() => {});
+    // eslint-disable-next-line react-hooks/immutability -- expo-audio players are configured by assignment
     player.loop = true; player.volume = alarm.gentle ? 0.15 : 1; player.play();
     // Loud, never-ending vibration until the missions are done.
     const buzz = () => { Vibration.vibrate(Platform.OS === 'android' ? [0, 800, 300] : 800, Platform.OS === 'android'); };
@@ -27,6 +28,7 @@ export default function Ring({ alarm, onSolved, preview }: { alarm: Alarm; onSol
     return () => { [vib, keep, talk, ramp, hold].forEach((t) => t && clearInterval(t)); player.pause(); Vibration.cancel(); };
   }, []);
   // Safety valve: if a mission does not register for 20s, offer plain math so the alarm can never trap you.
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset when the mission step changes
   useEffect(() => { setStuck(false); setFallback(false); const t = setTimeout(() => setStuck(true), 90000); return () => clearTimeout(t); }, [step]);
   const done = () => { if (step + 1 >= ms.length) onSolved(); else setStep(step + 1); };
   return (<View style={s.c}>
