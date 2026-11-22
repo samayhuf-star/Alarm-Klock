@@ -13,6 +13,7 @@ export default function Tilt({ onDone }: { onDone: () => void }) {
   useEffect(() => {
     t.current = setInterval(() => { if (ok) { s.current++; setSec(s.current); if (s.current >= 10) { clearInterval(t.current); onDone(); } } else { s.current = 0; setSec(0); } }, 1000);
     return () => clearInterval(t.current);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only sensor subscription
   }, [ok]);
   return (<View style={{ alignItems: 'center' }}><Title t="Stand up" sub="Hold the phone upright for 10 seconds" />
     <Text style={{ color: ok ? C.ok : C.accent2, fontSize: 90, fontWeight: '900' }}>{sec}s</Text></View>);

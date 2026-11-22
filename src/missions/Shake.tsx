@@ -11,6 +11,7 @@ export default function Shake({ onDone, goal = 30 }: { onDone: () => void; goal?
       if (g > 1.9 && now - last.current > 250) { last.current = now; cnt.current++; setC(cnt.current); Haptics.impactAsync(); if (cnt.current >= goal) onDone(); }
     });
     return () => sub.remove();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only sensor subscription
   }, []);
   return (<View style={{ alignItems: 'center' }}><Title t="Shake it!" sub="Keep shaking your phone" />
     <Text style={{ color: C.accent, fontSize: 90, fontWeight: '900' }}>{c}/{goal}</Text></View>);

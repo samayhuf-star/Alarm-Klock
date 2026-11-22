@@ -5,6 +5,7 @@ import { Alarm } from './types';
 import { soundFile } from './sounds';
 import { planTriggers, toIsoWeekday } from './logic';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports -- optional native module, must be loaded lazily
 const mod = () => { try { return require('react-native-alarm-scheduler').default as typeof import('react-native-alarm-scheduler').default; } catch { return null; } };
 export const nativeSupported = Platform.OS === 'ios' && parseInt(String(Platform.Version), 10) >= 26;
 

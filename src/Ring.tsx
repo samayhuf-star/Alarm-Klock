@@ -9,6 +9,7 @@ export default function Ring({ alarm, onSolved, preview }: { alarm: Alarm; onSol
   const player = useAudioPlayer(SOUND_SRC[alarm.sound || 'classic']);
   const [step, setStep] = useState(0); const [line, setLine] = useState(0); const [stuck, setStuck] = useState(false); const [fallback, setFallback] = useState(false);
   // "Surprise me" is resolved once per ring.
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- recompute only when the alarm changes
   const ms = useMemo<MissionId[]>(() => (alarm.missions.length ? alarm.missions : ['math' as MissionId]).map((m) => (m === 'surprise' ? (pickSurprise() as MissionId) : m)), [alarm.id]);
   useEffect(() => {
     setAudioModeAsync({ playsInSilentMode: true, shouldPlayInBackground: false }).catch(() => {});
@@ -26,6 +27,7 @@ export default function Ring({ alarm, onSolved, preview }: { alarm: Alarm; onSol
     let v = alarm.gentle ? 0.15 : 1;
     const ramp = alarm.gentle ? setInterval(() => { v = Math.min(1, v + 0.1); player.volume = v; }, 6000) : undefined;
     return () => { [vib, keep, talk, ramp, hold].forEach((t) => t && clearInterval(t)); player.pause(); Vibration.cancel(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only setup; reads initial alarm values
   }, []);
   // Safety valve: if a mission does not register for 20s, offer plain math so the alarm can never trap you.
   // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional reset when the mission step changes

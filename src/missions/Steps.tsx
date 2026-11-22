@@ -16,6 +16,7 @@ export default function Steps({ onDone, goal = 30 }: { onDone: () => void; goal?
       sub = Accelerometer.addListener(({ x, y, z }) => { const g = Math.sqrt(x * x + y * y + z * z); const now = Date.now(); if (g > 1.25 && now - last > 350) { last = now; n++; Haptics.selectionAsync(); finish(n); } });
     })();
     return () => { cancelled = true; sub?.remove(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only pedometer subscription
   }, []);
   return (<View style={{ alignItems: 'center' }}><Title t="🚶 Walk it off" sub="Get out of bed and walk" />
     <Text style={{ color: C.accent, fontSize: 90, fontWeight: '900' }}>{c}/{goal}</Text><Text style={{ color: C.dim }}>steps</Text></View>);
