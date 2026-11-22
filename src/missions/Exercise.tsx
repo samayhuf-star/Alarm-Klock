@@ -22,6 +22,7 @@ export default function Exercise({ kind, onDone }: { kind: ExKind; onDone: () =>
       else if (phase.current === 'down' && g > 1.2 && now - last.current > cfg.gap) { phase.current = 'idle'; last.current = now; rep(); }
     });
     return () => sub.remove();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only sensor subscription
   }, []);
   const pct = Math.min(100, (c / cfg.goal) * 100);
   return (<View style={{ alignItems: 'center', width: '100%' }}><Title t={`${cfg.emoji} ${cfg.title}`} sub={cfg.sub} />

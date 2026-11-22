@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { Btn, Title } from './ui'; import { C } from '../theme';
+import { Btn, Title } from './ui';
 export default function Qr({ onDone, expected }: { onDone: () => void; expected?: string }) {
   const [perm, ask] = useCameraPermissions(); const [msg, setMsg] = useState('Scan your saved QR code');
   if (!perm?.granted) return <View><Title t="Camera needed" /><Btn t="Allow camera" onPress={ask} /></View>;

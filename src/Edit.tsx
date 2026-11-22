@@ -4,6 +4,7 @@ import { Alarm, DAYS, MISSIONS, MissionId } from './types'; import { canUseMissi
 export default function Edit({ initial, pro, onSave, onCancel, onDelete, onNeedPro, onTest }: { initial: Alarm; pro: boolean; onSave: (a: Alarm) => void; onCancel: () => void; onDelete?: () => void; onNeedPro: () => void; onTest: (a: Alarm) => void }) {
   const [a, setA] = useState(initial);
   const player = useAudioPlayer(SOUND_SRC[initial.sound || 'classic']); const [playing, setPlaying] = useState<SoundId | null>(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only audio setup; cleanup pauses the initial player
   React.useEffect(() => { setAudioModeAsync({ playsInSilentMode: true }).catch(() => {}); return () => { try { player.pause(); } catch {} }; }, []);
   const preview = (id: SoundId) => {
     if (playing === id) { player.pause(); setPlaying(null); return; }
