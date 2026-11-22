@@ -15,6 +15,7 @@ export default function Plank({ onDone, goal = 30 }: { onDone: () => void; goal?
       if (tt.current >= goal * 5 && !done.current) { done.current = true; onDone(); }
     }, 200);
     return () => { sub.remove(); clearInterval(iv); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only sensor subscription
   }, []);
   return (<View style={{ alignItems: 'center' }}><Title t="🧱 Plank" sub="Place the phone beside you and hold still" />
     <Text style={{ color: moving ? C.accent2 : C.ok, fontSize: 90, fontWeight: '900' }}>{t}s</Text>
