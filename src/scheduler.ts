@@ -14,8 +14,10 @@ export async function initNotifications() {
     for (const id of ['classic', 'digital', 'siren', 'rise', 'chime']) {
       for (const gentle of [false, true]) {
         await Notifications.setNotificationChannelAsync(channelId(id, gentle), {
+          // eslint-disable-next-line import/namespace -- exists in expo-notifications; the namespace check cannot see it
           name: `Alarms (${id}${gentle ? ', gentle' : ''})`, importance: Notifications.AndroidImportance.MAX,
           sound: `${id}${gentle ? '_gentle' : ''}.wav`, vibrationPattern: [0, 500, 300, 500], bypassDnd: true,
+          // eslint-disable-next-line import/namespace -- exists in expo-notifications; the namespace check cannot see it
           lockscreenVisibility: Notifications.AndroidNotificationVisibility.PUBLIC,
         });
       }

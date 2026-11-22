@@ -7,6 +7,7 @@ export default function Memory({ onDone }: { onDone: () => void }) {
   const [lit, setLit] = useState(-1); const [pos, setPos] = useState(0); const [show, setShow] = useState(true);
   const [msg, setMsg] = useState('Watch the pattern');
   const play = () => { setShow(true); setPos(0); setMsg('Watch the pattern'); seq.forEach((c, i) => { setTimeout(() => setLit(c), 700 + i * 700); setTimeout(() => setLit(-1), 700 + i * 700 + 450); }); setTimeout(() => { setShow(false); setMsg('Your turn'); }, 700 + seq.length * 700); };
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- the pattern must start playing on mount
   useEffect(play, []);
   const tap = (i: number) => { if (show) return; if (i === seq[pos]) { if (pos + 1 === seq.length) onDone(); else setPos(pos + 1); } else { setMsg('Wrong! Watch again'); play(); } };
   return (<View style={{ alignItems: 'center' }}><Title t="Memory" sub={msg} />

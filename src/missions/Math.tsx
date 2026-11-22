@@ -4,7 +4,7 @@ import { Btn, Title } from './ui'; import { C } from '../theme';
 const gen = () => { const a = 12 + Math.floor(Math.random() * 38), b = 3 + Math.floor(Math.random() * 12), c = 10 + Math.floor(Math.random() * 40); return { q: `${a} × ${b} + ${c}`, r: a * b + c }; };
 export default function MathMission({ onDone }: { onDone: () => void }) {
   const [n, setN] = useState(0); const [v, setV] = useState(''); const [bad, setBad] = useState(false);
-  const p = useMemo(gen, [n]);
+  const p = useMemo(() => gen(), [n]);
   return (<View style={{ width: '100%' }}>
     <Title t="Solve it" sub={`Problem ${n + 1} of 3`} />
     <Text style={{ color: C.accent, fontSize: 44, fontWeight: '900', textAlign: 'center', marginBottom: 20 }}>{p.q}</Text>

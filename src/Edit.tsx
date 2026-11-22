@@ -7,6 +7,7 @@ export default function Edit({ initial, pro, onSave, onCancel, onDelete, onNeedP
   React.useEffect(() => { setAudioModeAsync({ playsInSilentMode: true }).catch(() => {}); return () => { try { player.pause(); } catch {} }; }, []);
   const preview = (id: SoundId) => {
     if (playing === id) { player.pause(); setPlaying(null); return; }
+    // eslint-disable-next-line react-hooks/immutability -- expo-audio players are configured by assignment
     player.replace(SOUND_SRC[id]); player.loop = true; player.volume = 1; player.play(); setPlaying(id);
     setA((x) => ({ ...x, sound: id }));
   };
@@ -15,12 +16,12 @@ export default function Edit({ initial, pro, onSave, onCancel, onDelete, onNeedP
     if (needsPro && !canUseMission(id, pro)) return onNeedPro();
     setA({ ...a, missions: a.missions.includes(id) ? a.missions.filter((x) => x !== id) : [...a.missions, id] });
   };
-  const Col = ({ k }: { k: 'hour' | 'minute' }) => (<View style={{ alignItems: 'center' }}>
+  const renderCol = (k: 'hour' | 'minute') => (<View style={{ alignItems: 'center' }}>
     <Pressable onPress={() => step(k, k === 'hour' ? 1 : 5)}><Text style={s.arrow}>▲</Text></Pressable>
     <Text style={s.big}>{String(a[k]).padStart(2, '0')}</Text>
     <Pressable onPress={() => step(k, k === 'hour' ? -1 : -5)}><Text style={s.arrow}>▼</Text></Pressable></View>);
   return (<ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ padding: 20, paddingTop: 60 }}>
-    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, marginBottom: 20 }}><Col k="hour" /><Text style={s.big}>:</Text><Col k="minute" /></View>
+    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10, marginBottom: 20 }}>{renderCol('hour')}<Text style={s.big}>:</Text>{renderCol('minute')}</View>
     <TextInput value={a.label} onChangeText={(label) => setA({ ...a, label })} placeholder="Label (optional)" placeholderTextColor={C.dim} style={s.input} />
     <View style={s.row}>{DAYS.map((d, i) => { const on = a.days.includes(i + 1); return (
       <Pressable key={i} onPress={() => setA({ ...a, days: on ? a.days.filter((x) => x !== i + 1) : [...a.days, i + 1] })} style={[s.day, on && { backgroundColor: C.accent }]}>
