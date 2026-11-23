@@ -4,7 +4,8 @@ import { StatusBar } from 'expo-status-bar'; import * as Notifications from 'exp
 import { Alarm } from './src/types'; import { loadAlarms, saveAlarms, loadStreak, saveStreak } from './src/store';
 import { pendingNativeAlarmId } from './src/native';
 import { initNotifications, scheduleAlarm, cancelAlarm, silenceFollowUps, nextRing } from './src/scheduler';
-import { initPurchases, showPaywall, openCustomerCenter, restore } from './src/purchases';
+import { initPurchases, showPaywall, openCustomerCenter, restore, purchaseEvents } from './src/purchases';
+import Invite from './src/Invite'; import { hello, referralOn, shouldInvite, InviteMoment } from './src/referral';
 import { backupsPerAlarm, applyEdit, canAddAlarm, SLEEP_PRESETS, alarmFromDuration, isExpiredTemp, nextStreak, Streak } from './src/logic';
 import Edit from './src/Edit'; import Ring from './src/Ring'; import { C } from './src/theme';
 
@@ -18,6 +19,9 @@ export default function App() {
   const [editing, setEditing] = useState<{ a: Alarm; isNew: boolean } | null>(null); const [ringing, setRinging] = useState<Alarm | null>(null); const [test, setTest] = useState<Alarm | null>(null);
   const [ok, setOk] = useState(true); const [streak, setStreak] = useState<Streak>({ count: 0, last: '' });
 
+  const [invite, setInvite] = useState<InviteMoment | 'menu' | null>(null);
+  const offerInvite = (m: InviteMoment) => shouldInvite(m).then((y) => y && setTimeout(() => setInvite(m), 600)); // once each, after the screen settles
+
   const persist = useCallback(async (next: Alarm[]) => { setAlarms(next); await saveAlarms(next); }, []);
   const solvedAt = React.useRef<Record<string, number>>({}); const ringingId = React.useRef<string | null>(null);
   const ring = useCallback((id?: string) => setAlarms((cur) => {
@@ -28,7 +32,7 @@ export default function App() {
   }), []);
 
   useEffect(() => {
-    initPurchases(setPro); initNotifications().then(setOk); loadStreak().then(setStreak);
+    initPurchases(setPro); hello(); purchaseEvents.onPurchased = () => offerInvite('paid'); initNotifications().then(setOk); loadStreak().then(setStreak);
     loadAlarms().then(async (list) => {
       const live = list.filter((x) => !isExpiredTemp(x)); const out: Alarm[] = [];
       const backups = backupsPerAlarm(live); for (const x of live) out.push(x.enabled ? { ...x, notifIds: await scheduleAlarm(x, { backups }) } : x); // re-arm everything on launch
@@ -51,6 +55,7 @@ export default function App() {
     const ids = await scheduleAlarm({ ...edited, notifIds: a.notifIds }, { backups: backupsPerAlarm(next) });
     const saved = { ...edited, notifIds: ids };
     await persist(isNew ? [...alarms, saved] : alarms.map((x) => (x.id === a.id ? saved : x))); setEditing(null);
+    if (isNew) offerInvite('firstUse'); // first alarm saved = first real use of the app
   };
   const toggle = async (a: Alarm, enabled: boolean) => { const n = { ...a, enabled }; n.notifIds = await scheduleAlarm(n, { backups: backupsPerAlarm(alarms.map((x) => (x.id === a.id ? n : x))) }); await persist(alarms.map((x) => (x.id === a.id ? n : x))); };
   const del = (a: Alarm) => Alert.alert('Delete alarm?', 'This cannot be undone.', [{ text: 'Keep', style: 'cancel' }, { text: 'Delete', style: 'destructive', onPress: async () => { await cancelAlarm(a); await persist(alarms.filter((x) => x.id !== a.id)); setEditing(null); } }]);
@@ -71,7 +76,8 @@ export default function App() {
   if (editing) return <Edit initial={editing.a} pro={pro} onSave={(a) => save(a, editing.isNew)} onCancel={() => setEditing(null)} onDelete={editing.isNew ? undefined : () => del(editing.a)} onNeedPro={showPaywall} onTest={setTest} />;
 
   return (<View style={s.c}><StatusBar style="light" />
-    <Text style={s.h}>Alarm Klock</Text><Text style={s.sub}>{pro ? 'Pro unlocked' : 'Free plan · try Pro free for 7 days'}{streak.count > 0 ? `  ·  🔥 ${streak.count}-day streak` : ''}</Text>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}><Text style={s.h}>Alarm Klock</Text>
+      {referralOn && <Pressable onPress={() => setInvite('menu')} hitSlop={8} style={s.inv} accessibilityLabel="Invite friends"><Text style={{ color: C.accent, fontWeight: '800' }}>🎁 Invite</Text></Pressable>}</View><Text style={s.sub}>{pro ? 'Pro unlocked' : 'Free plan · try Pro free for 7 days'}{streak.count > 0 ? `  ·  🔥 ${streak.count}-day streak` : ''}</Text>
     {!ok && <Text style={s.warn}>Notifications are off. Alarms cannot ring until you allow them in Settings.</Text>}
     <FlatList data={alarms}
       ListHeaderComponent={<View style={{ marginBottom: 14 }}><Text style={{ color: C.dim, fontWeight: '700', marginBottom: 8 }}>Sleep timer (tap to start)</Text>
@@ -92,6 +98,7 @@ export default function App() {
       <Pressable onPress={() => (pro ? openCustomerCenter() : showPaywall())} style={s.ghost}><Text style={{ color: C.text, fontWeight: '700' }}>{pro ? 'Manage' : 'Go Pro'}</Text></Pressable>
       <Pressable onPress={() => setEditing({ a: blank(), isNew: true })} style={s.fab}><Text style={{ fontSize: 34, color: '#1a1200', fontWeight: '800' }}>+</Text></Pressable>
       <Pressable onPress={restore} style={s.ghost}><Text style={{ color: C.text, fontWeight: '700' }}>Restore</Text></Pressable></View>
+    {invite && <Invite paid={invite === 'paid'} onClose={() => setInvite(null)} />}
   </View>);
 }
 const s = StyleSheet.create({ c: { flex: 1, backgroundColor: C.bg, paddingTop: 70, paddingHorizontal: 20 }, h: { color: C.text, fontSize: 34, fontWeight: '900' }, sub: { color: C.accent, marginBottom: 16, fontWeight: '700' },
@@ -99,4 +106,5 @@ const s = StyleSheet.create({ c: { flex: 1, backgroundColor: C.bg, paddingTop: 7
   t: { color: C.text, fontSize: 40, fontWeight: '900' }, lab: { color: C.dim, marginTop: 2 },
   bar: { position: 'absolute', bottom: 34, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   chip: { backgroundColor: C.card, borderRadius: 16, paddingVertical: 10, paddingHorizontal: 14, marginRight: 10, alignItems: 'center', minWidth: 84 },
-  fab: { width: 68, height: 68, borderRadius: 34, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }, ghost: { backgroundColor: C.card2, paddingVertical: 14, paddingHorizontal: 20, borderRadius: 16 } });
+  fab: { width: 68, height: 68, borderRadius: 34, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' }, ghost: { backgroundColor: C.card2, paddingVertical: 14, paddingHorizontal: 20, borderRadius: 16 },
+  inv: { backgroundColor: C.card, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 14 } });

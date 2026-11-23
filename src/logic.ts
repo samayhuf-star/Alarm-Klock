@@ -101,3 +101,8 @@ export function nextStreak(s: Streak, today: Date = new Date()): Streak {
 /** Pure: pick a random mission for "Surprise me". */
 export const SURPRISE_POOL = ['math', 'memory', 'stroop', 'pushups', 'squat', 'jacks', 'situps', 'shake'] as const;
 export const pickSurprise = (rand: () => number = Math.random) => SURPRISE_POOL[Math.floor(rand() * SURPRISE_POOL.length)];
+
+/** Invite codes: 6 characters, upper-case, letters and digits only. */
+export const normalizeCode = (t: string) => t.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+export const inviteMessage = (code: string, url: string) =>
+  `Wake up for real with Alarm Klock ⏰ Enter my code ${code} in the app within 48 hours of installing and we both get 1 month of Pro free. ${url}`;

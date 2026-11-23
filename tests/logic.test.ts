@@ -95,3 +95,7 @@ test('FIX4: pending notifications stay under the iOS limit', () => {
 
 import { toIsoWeekday } from '../src/logic';
 test('weekday mapping app(1=Sun) -> ISO(1=Mon)', () => { assert.deepEqual([1, 2, 3, 4, 5, 6, 7].map(toIsoWeekday), [7, 1, 2, 3, 4, 5, 6]); });
+
+import { normalizeCode, inviteMessage } from '../src/logic';
+test('invite code is cleaned to 6 upper-case letters and digits', () => { assert.equal(normalizeCode(' 272-ws4 '), '272WS4'); assert.equal(normalizeCode('abcdefgh'), 'ABCDEF'); });
+test('invite message carries the code and the link', () => { const m = inviteMessage('272WS4', 'https://x.test'); assert.ok(m.includes('272WS4') && m.endsWith('https://x.test')); });
