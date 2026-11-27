@@ -1,0 +1,101 @@
+{
+ "out": "/home/dev/ios-publish/work/Alarm-Klock/store/screenshots",
+ "prefix": "alarm",
+ "bg": [
+  "#3b2f8f",
+  "#140f33"
+ ],
+ "accent": "#FFC24B",
+ "shots": [
+  {
+   "src": "/home/dev/ios-publish/work/Alarm-Klock/store-shots/05-ring-color-clash.png",
+   "cap": [
+    "Prove you are",
+    "awake"
+   ],
+   "sub": "Finish a mission to stop the alarm",
+   "crop": {
+    "left": 0,
+    "top": 110,
+    "width": 1080,
+    "height": 2314
+   }
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/al/w-03.png",
+   "cap": [
+    "Missions that",
+    "wake your brain"
+   ],
+   "sub": "Math, memory, typing, shake and more"
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/al/w-02.png",
+   "cap": [
+    "Beat the",
+    "snooze button"
+   ],
+   "sub": "No more snooze spirals"
+  },
+  {
+   "src": "/home/dev/ios-publish/work/Alarm-Klock/store-shots/03-missions-brain.png",
+   "cap": [
+    "15 wake-up",
+    "missions"
+   ],
+   "sub": "Brain, workout, QR code and photo",
+   "crop": {
+    "left": 0,
+    "top": 110,
+    "width": 1080,
+    "height": 2314
+   }
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/al/w-04.png",
+   "cap": [
+    "Backup rings",
+    "if you doze off"
+   ],
+   "sub": "Rings again every minute, up to 5 times"
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/al/w-05.png",
+   "cap": [
+    "Rings even",
+    "on Silent"
+   ],
+   "sub": "Through Silent and Focus on iOS 26"
+  },
+  {
+   "src": "/home/dev/ios-publish/work/Alarm-Klock/store-shots/02-edit-sounds.png",
+   "cap": [
+    "Pick your sound,",
+    "pick your days"
+   ],
+   "sub": "Classic, Digital, Siren, Rise, Chime",
+   "crop": {
+    "left": 0,
+    "top": 110,
+    "width": 1080,
+    "height": 2314
+   }
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/al/w-06.png",
+   "cap": [
+    "Naps in",
+    "one tap"
+   ],
+   "sub": "15 min to 2 h, mission included"
+  },
+  {
+   "src": "/tmp/claude-1000/-home-dev/b45e0c0f-e0ad-4202-ae52-613bca09bb6e/scratchpad/al/w-07.png",
+   "cap": [
+    "Build a",
+    "wake-up streak"
+   ],
+   "sub": "A day added every morning you rise"
+  }
+ ]
+}
