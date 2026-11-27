@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
+import { setTipsConsent } from './push';
+
+export const ONBOARDING_SCREENS = 10;
 
 type Theme = { bg: [string, string, string]; ink: string; sub: string; chip: string };
 const SUN: Theme = { bg: ['#1B1340', '#7A2E6E', '#FF8A5B'], ink: '#FFF8EE', sub: '#FFD9C2', chip: 'rgba(255,255,255,0.14)' };
@@ -34,13 +37,27 @@ function Moon() {
     <View style={s.pill}><Text style={{ fontSize: 15, color: '#fff', fontWeight: '800' }}>🔕  Silent mode on  ·  alarm still rings</Text></View></View>);
 }
 
-type Step = { theme: Theme; art: React.ReactNode; title: string; body: string; bullets?: string[] };
+function Emojis({ items, size = 56 }: { items: string[]; size?: number }) {
+  return (<View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 14, maxWidth: 300 }}>
+    {items.map((e, k) => <View key={k} style={[s.bubble, { width: size * 1.6, height: size * 1.6, borderRadius: size }]}><Text style={{ fontSize: size }}>{e}</Text></View>)}</View>);
+}
+function Chips({ items }: { items: { e: string; t: string }[] }) {
+  return (<View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12, maxWidth: 300 }}>
+    {items.map((c) => <View key={c.t} style={s.nap}><Text style={{ fontSize: 30 }}>{c.e}</Text><Text style={s.napT}>{c.t}</Text></View>)}</View>);
+}
+
+type Step = { theme: Theme; art: React.ReactNode; title: string; body: string; bullets?: string[]; tips?: boolean };
 const STEPS: Step[] = [
   { theme: SUN, art: <Sun />, title: 'Wake up for real', body: 'Your alarm only stops when your brain is awake too. No more snooze spirals.' },
   { theme: DAY, art: <AlarmClock />, title: 'Beat the snooze button', body: 'Set one alarm. Skip the groggy tap and prove you are up with a quick mission.' },
   { theme: NIGHT, art: <MissionStack />, title: 'Missions that wake your brain', body: 'Solve math, shake your phone, repeat a pattern or type a phrase.' },
+  { theme: DAY, art: <Emojis items={['⏰', '🔔', '🔔', '🔔']} size={40} />, title: 'Backup rings', body: 'Slept through it? Alarm Klock rings again every minute, up to 5 more times, until you finish the mission.' },
   { theme: NIGHT, art: <Moon />, title: 'Rings even on Silent', body: 'On iOS 26 and later, alarms ring through Silent and Focus. We will ask for alarm permission next.' },
-  { theme: SUN, art: <Sun size={120} />, title: 'What you get', body: 'Start free, upgrade when you want more.', bullets: ['Free: 2 alarms and 6 missions', 'Pro: unlimited alarms', 'Pro: all 15 missions, incl. workouts, QR and photo'] },
+  { theme: SUN, art: <Chips items={[{ e: '⚡', t: '15 min' }, { e: '😴', t: '30 min' }, { e: '🛌', t: '1 h' }, { e: '🌙', t: '2 h' }]} />, title: 'Naps in one tap', body: 'Pick a nap length and go. A one-off alarm is set for you, mission included.' },
+  { theme: DAY, art: <Emojis items={['🔥']} size={90} />, title: 'Build a wake-up streak', body: 'Every morning you finish your mission adds a day to your streak. Keep it going.' },
+  { theme: NIGHT, art: <Emojis items={['🔒']} size={80} />, title: 'Private by design', body: 'No account, no sign-up. Your alarms and streak stay on your phone.' },
+  { theme: SUN, art: <Emojis items={['💡']} size={80} />, title: 'Morning tips?', body: 'Get an occasional tip for better wake-ups. Optional, and your alarms work either way. You can change this in iPhone Settings.', tips: true },
+  { theme: SUN, art: <Sun size={120} />, title: 'What you get', body: 'Start free, upgrade when you want more.', bullets: ['Free: 2 alarms and 6 missions', 'Pro: unlimited alarms', 'Pro: all 15 missions, incl. workouts, QR and photo', 'Pro plans: weekly, monthly, yearly or lifetime'] },
 ];
 
 export default function Onboarding({ onDone }: { onDone: (wantsPro: boolean) => void }) {
@@ -51,8 +68,8 @@ export default function Onboarding({ onDone }: { onDone: (wantsPro: boolean) => 
     <View style={[s.art, { minHeight: height * 0.34 }]}>{st.art}</View>
     <View style={s.copy}><Text style={[s.t, { color: t.ink }]}>{st.title}</Text><Text style={[s.b, { color: t.sub }]}>{st.body}</Text>
       {st.bullets?.map((x) => <View key={x} style={[s.row, { backgroundColor: t.chip }]}><Text style={{ color: '#FFD36B', fontSize: 18, fontWeight: '900' }}>✓</Text><Text style={[s.li, { color: t.ink }]}>{x}</Text></View>)}</View>
-    <Pressable style={s.cta} onPress={() => (last ? onDone(true) : setI(i + 1))}><Text style={s.ctaT}>{last ? 'See Pro plans' : 'Continue'}</Text></Pressable>
-    {last ? <Pressable onPress={() => onDone(false)} style={{ padding: 14 }}><Text style={{ color: t.sub, textAlign: 'center', fontWeight: '700' }}>Continue with free</Text></Pressable> : <View style={{ height: 46 }} />}
+    <Pressable style={s.cta} onPress={() => { if (st.tips) setTipsConsent(true); return last ? onDone(true) : setI(i + 1); }}><Text style={s.ctaT}>{last ? 'See Pro plans' : st.tips ? 'Yes, send tips' : 'Continue'}</Text></Pressable>
+    {st.tips ? <Pressable onPress={() => { setTipsConsent(false); setI(i + 1); }} style={{ padding: 14 }}><Text style={{ color: t.sub, textAlign: 'center', fontWeight: '700' }}>Not now</Text></Pressable> : last ? <Pressable onPress={() => onDone(false)} style={{ padding: 14 }}><Text style={{ color: t.sub, textAlign: 'center', fontWeight: '700' }}>Continue with free</Text></Pressable> : <View style={{ height: 46 }} />}
   </LinearGradient>);
 }
 const s = StyleSheet.create({ c: { flex: 1, paddingHorizontal: 24, paddingTop: 60, paddingBottom: 30 },
@@ -64,4 +81,6 @@ const s = StyleSheet.create({ c: { flex: 1, paddingHorizontal: 24, paddingTop: 6
   bell: { width: 46, height: 46, borderRadius: 23, backgroundColor: '#FFC24B' },
   clock: { width: 220, height: 220, borderRadius: 110, alignItems: 'center', justifyContent: 'center', borderWidth: 8, borderColor: '#FFC24B' }, clockT: { fontSize: 56, fontWeight: '900', color: '#2A1500' }, clockS: { fontSize: 13, fontWeight: '900', letterSpacing: 2, color: '#C2410C', marginTop: 2 },
   mcard: { position: 'absolute', width: 220, height: 62, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 20, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 10, shadowOffset: { width: 0, height: 6 } }, mt: { fontSize: 22, fontWeight: '900', color: '#1a1200' },
+  bubble: { backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
+  nap: { width: 130, paddingVertical: 16, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', gap: 6 }, napT: { color: '#FFFBF2', fontSize: 18, fontWeight: '900' },
   pill: { marginTop: 34, backgroundColor: 'rgba(255,255,255,0.14)', borderRadius: 999, paddingVertical: 10, paddingHorizontal: 16 } });

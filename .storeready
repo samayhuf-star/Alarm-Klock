@@ -5,8 +5,8 @@
     "password": ""
   },
   "appReviewNotes": "Alarm Klock has no accounts or login, so no demo account is needed. Set an alarm, pick a mission, and use the ring preview to see it.",
-  "privacyPolicyUrl": "https://machine.esamay.live/alarm-klock/privacy",
-  "supportUrl": "https://machine.esamay.live/alarm-klock/support",
+  "privacyPolicyUrl": "https://klenzer.online/legal/privacy/",
+  "supportUrl": "https://klenzer.online/alarm-klock/",
   "screenshotsPath": "./store-shots",
   "noLogin": true
 }

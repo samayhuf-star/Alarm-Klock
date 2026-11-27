@@ -2,7 +2,7 @@
   "expo": {
     "name": "Alarm Klock",
     "slug": "alarm-klock",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "description": "Alarm Klock is a wake-up alarm with missions (shake, QR, photo, squats, brain puzzles) that make sure you are really awake.",
     "icon": "./assets/icon.png",
     "orientation": "portrait",
@@ -116,8 +116,8 @@
       "eas": {
         "projectId": "e21bc4e3-e21d-4ca8-951e-66a795378119"
       },
-      "privacyPolicyUrl": "https://machine.esamay.live/alarm-klock/privacy",
-      "supportUrl": "https://machine.esamay.live/alarm-klock/support"
+      "privacyPolicyUrl": "https://klenzer.online/legal/privacy/",
+      "supportUrl": "https://klenzer.online/alarm-klock/"
     },
     "owner": "krosz",
     "updates": {

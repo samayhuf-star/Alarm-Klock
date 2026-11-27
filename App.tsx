@@ -10,8 +10,8 @@ import { backupsPerAlarm, applyEdit, canAddAlarm, SLEEP_PRESETS, alarmFromDurati
 import AsyncStorage from '@react-native-async-storage/async-storage'; import Onboarding from './src/Onboarding';
 import Edit from './src/Edit'; import Ring from './src/Ring'; import { C } from './src/theme';
 
-const PRIVACY_URL = 'https://machine.esamay.live/alarm-klock/privacy';
-const TERMS_URL = 'https://machine.esamay.live/alarm-klock/terms';
+const PRIVACY_URL = 'https://klenzer.online/legal/privacy/';
+const TERMS_URL = 'https://klenzer.online/legal/terms/';
 
 const blank = (): Alarm => ({ id: String(Date.now()), hour: 7, minute: 0, label: '', enabled: true, days: [2, 3, 4, 5, 6], missions: ['math'], notifIds: [], gentle: true });
 
@@ -77,7 +77,7 @@ export default function App() {
   if (editing) return <Edit initial={editing.a} pro={pro} onSave={(a) => save(a, editing.isNew)} onCancel={() => setEditing(null)} onDelete={editing.isNew ? undefined : () => del(editing.a)} onNeedPro={showPaywall} onTest={setTest} />;
 
   return (<View style={s.c}><StatusBar style="light" />
-    <Text style={s.h}>Alarm Klock</Text><Text style={s.sub}>{pro ? 'Pro unlocked' : 'Free plan · try Pro free for 7 days'}{streak.count > 0 ? `  ·  🔥 ${streak.count}-day streak` : ''}</Text>
+    <Text style={s.h}>Alarm Klock</Text><Text style={s.sub}>{pro ? 'Pro unlocked' : 'Free plan · upgrade to Pro'}{streak.count > 0 ? `  ·  🔥 ${streak.count}-day streak` : ''}</Text>
     {!ok && <Text style={s.warn}>Notifications are off. Alarms cannot ring until you allow them in Settings.</Text>}
     <FlatList data={alarms}
       ListHeaderComponent={<View style={{ marginBottom: 14 }}><Text style={{ color: C.dim, fontWeight: '700', marginBottom: 8 }}>Sleep timer (tap to start)</Text>

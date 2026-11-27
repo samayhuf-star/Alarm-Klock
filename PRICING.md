@@ -9,3 +9,6 @@ Project "Alarm Klock" (72ebcd5c), iOS app com.samay.alarmklock, entitlement `pre
 
 ## Update 22 Nov 2026
 No free trial for now. Live prices $2.99/month and $19.99/year in all countries; the weekly product was deleted. Free tier: 2 alarms and 6 missions (math, memory, typing, color clash, shake, surprise). Pro: unlimited alarms and all 15 missions. Onboarding: 5 screens, then "What you get", then the RevenueCat paywall or Continue with free.
+
+## Update 27 Nov 2026 (v1.0.2)
+Paywall (RevenueCat, offering for entitlement `premium`) should show 4 packages: $rc_weekly=com.samay.alarmklock.weekly2, $rc_monthly, $rc_annual, $rc_lifetime=com.samay.alarmklock.lifetime. Packages are attached in the RevenueCat dashboard. Onboarding: 10 screens (ONBOARDING_SCREENS) with an opt-in "Morning tips" screen that gives OneSignal consent; alarms stay local.
