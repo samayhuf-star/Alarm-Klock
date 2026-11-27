@@ -1,0 +1,36 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "categories": [
+      "UTILITIES",
+      "PRODUCTIVITY"
+    ],
+    "info": {
+      "en-US": {
+        "title": "Alarm Klock: Loud Alarm Clock",
+        "subtitle": "Wake-up missions, no snooze",
+        "description": "The alarm that will not stop until you finish a wake-up mission. Math, memory, typing, a walk, a photo — you pick the task. This clock will not snooze itself quiet.\n\nSet unlimited alarms with a gentle volume ramp, custom sounds and a clear countdown to the next one.\n\nNo account needed. Missions, motion and photos stay on your iPhone.\n\nWAKE-UP MISSIONS\nBrain: math, memory, typing and colour clash, plus a surprise option that picks a mission for you.\nMove: walk a set number of steps, shake the phone, or snap a photo of a place you choose. Premium unlocks extra move missions such as squats, push-ups and a QR-code scan you can stick on the bathroom door.\n\nSMART WAKE-UP\n• Gentle volume ramp instead of a sudden jolt.\n• Unlimited alarms with custom labels and sounds.\n• Repeat by day, snooze limits and a clear next-alarm countdown.\n\nPRIVATE BY DESIGN\nNo account needed. Missions run on your device and your photos and motion data never leave it.\n\nALARM KLOCK PREMIUM\nStart with a 7-day free trial, then a monthly or yearly auto-renewing subscription. Payment is charged to your Apple ID at confirmation of purchase. Subscriptions renew automatically unless canceled at least 24 hours before the end of the current period. Manage or cancel anytime in Settings > Apple ID > Subscriptions. Prices are shown in the app and may vary by country.\n\nTerms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/\nPrivacy Policy: https://klenzer.online/legal/privacy/",
+        "keywords": [
+          "math",
+          "heavy",
+          "sleeper",
+          "mission",
+          "puzzle",
+          "wakeup",
+          "morning",
+          "steps",
+          "shake",
+          "photo",
+          "qr",
+          "typing",
+          "memory",
+          "smart",
+          "ringtone"
+        ],
+        "promoText": "Stop hitting snooze. A math, walk or photo mission has to be finished before this alarm will go quiet. 7-day free trial of Premium.",
+        "supportUrl": "https://klenzer.online/legal/support/",
+        "privacyPolicyUrl": "https://machine.esamay.live/alarm-klock/privacy"
+      }
+    }
+  }
+}

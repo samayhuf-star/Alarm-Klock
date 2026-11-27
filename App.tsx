@@ -9,6 +9,7 @@ import { initPurchases, showPaywall, openCustomerCenter, restore } from './src/p
 import { backupsPerAlarm, applyEdit, canAddAlarm, SLEEP_PRESETS, alarmFromDuration, isExpiredTemp, nextStreak, Streak } from './src/logic';
 import AsyncStorage from '@react-native-async-storage/async-storage'; import Onboarding from './src/Onboarding';
 import Edit from './src/Edit'; import Ring from './src/Ring'; import { C } from './src/theme';
+import { noteSuccess } from './src/reviewPrompt';
 
 const PRIVACY_URL = 'https://klenzer.online/legal/privacy/';
 const TERMS_URL = 'https://klenzer.online/legal/terms/';
@@ -62,6 +63,7 @@ export default function App() {
     if (r.temp || r.days.length === 0) { const rest = alarms.filter((x) => x.id !== r.id || (!r.temp && r.days.length > 0)); await persist(r.temp ? rest : alarms.map((x) => (x.id === r.id ? { ...x, enabled: false, notifIds: [] } : x))); }
     else { const ids = await scheduleAlarm(r, { skipTodayFollowUps: true, backups: backupsPerAlarm(alarms) }); await persist(alarms.map((x) => (x.id === r.id ? { ...x, notifIds: ids } : x))); }
     const ns = nextStreak(streak); setStreak(ns); await saveStreak(ns);
+    noteSuccess(3); // rating prompt after the 3rd real wake-up mission (never in preview)
   };
   const startSleep = (p: (typeof SLEEP_PRESETS)[number]) => {
     const t = alarmFromDuration(p.label, p.minutes);
