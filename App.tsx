@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar'; import * as Notifications from 'exp
 import { Alarm } from './src/types'; import { loadAlarms, saveAlarms, loadStreak, saveStreak } from './src/store';
 import { pendingNativeAlarmId } from './src/native';
 import { initNotifications, scheduleAlarm, cancelAlarm, silenceFollowUps, nextRing } from './src/scheduler';
+import { initPush } from './src/push';
 import { initPurchases, showPaywall, openCustomerCenter, restore } from './src/purchases';
 import { backupsPerAlarm, applyEdit, canAddAlarm, SLEEP_PRESETS, alarmFromDuration, isExpiredTemp, nextStreak, Streak } from './src/logic';
 import Edit from './src/Edit'; import Ring from './src/Ring'; import { C } from './src/theme';
@@ -28,7 +29,7 @@ export default function App() {
   }), []);
 
   useEffect(() => {
-    initPurchases(setPro); initNotifications().then(setOk); loadStreak().then(setStreak);
+    initPurchases(setPro); initNotifications().then(setOk); initPush(); loadStreak().then(setStreak);
     loadAlarms().then(async (list) => {
       const live = list.filter((x) => !isExpiredTemp(x)); const out: Alarm[] = [];
       const backups = backupsPerAlarm(live); for (const x of live) out.push(x.enabled ? { ...x, notifIds: await scheduleAlarm(x, { backups }) } : x); // re-arm everything on launch

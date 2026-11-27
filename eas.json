@@ -18,7 +18,8 @@
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_RC_IOS_KEY": "appl_YybTkUcTFOQpNbefbAMYtbYaVRM",
-        "EXPO_PUBLIC_RC_ANDROID_KEY": "goog_vbWpLpxvfMMvCzDHhKQPDDtPNmA"
+        "EXPO_PUBLIC_RC_ANDROID_KEY": "goog_vbWpLpxvfMMvCzDHhKQPDDtPNmA",
+        "EXPO_PUBLIC_ONESIGNAL_APP_ID": "72df0342-eee9-4149-ae02-e9e1276d9b83"
       }
     }
   },
