@@ -2,7 +2,7 @@
   "expo": {
     "name": "Alarm Klock",
     "slug": "alarm-klock",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "Alarm Klock is a wake-up alarm with missions (shake, QR, photo, squats, brain puzzles) that make sure you are really awake.",
     "icon": "./assets/icon.png",
     "orientation": "portrait",
